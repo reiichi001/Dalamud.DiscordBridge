@@ -19,9 +19,12 @@ namespace Dalamud.DiscordBridge
         /// <summary>
         /// Constructs a <see cref="DuplicateFilter"/> to dedupe messages for the given socket client.
         /// </summary>
+        /// <param name="plugin"></param>
         /// <param name="client">The socket client to monitor for duplicate messages.</param>
-        public DuplicateFilter(DiscordSocketClient client)
+        public DuplicateFilter(Plugin plugin, DiscordSocketClient client)
         {
+            this.plugin = plugin;
+            
             client.MessageReceived += OnMessageReceived;
         }
         
@@ -55,9 +58,9 @@ namespace Dalamud.DiscordBridge
             
             long msgDiff = GetAgeMs(recentMsg);
             
-            if (msgDiff < RecentIntervalMs)
+            if (msgDiff < plugin.Config.DuplicateCheckMS)
             {
-                PluginLog.LogVerbose($"[FILTER] Filtered outgoing message as duplicate. Threshold: {RecentIntervalMs}ms, Diff: {msgDiff}ms");
+                PluginLog.LogVerbose($"[FILTER] Filtered outgoing message as duplicate. Diff: {msgDiff}ms, Threshold: {plugin.Config.DuplicateCheckMS}ms");
 
                 return true;
             }
@@ -92,7 +95,7 @@ namespace Dalamud.DiscordBridge
         {
             // Remove for consideration any message that's over the age threshold.
             var filtered = recentMessages
-                .Where(m => GetAgeMs(m) < RecentIntervalMs)
+                .Where(m => GetAgeMs(m) < plugin.Config.DuplicateCheckMS)
                 .ToArray(); // Convert to array to avoid multiple enumeration below.
 
             // Holds deleted messages so that they can be removed from recents later.
@@ -184,8 +187,8 @@ namespace Dalamud.DiscordBridge
         
         #region Private Data
 
-        private const long RecentIntervalMs = 10000;
-
+        private readonly Plugin plugin;
+        
         private HashSet<SocketMessage> recentMessages = new();
 
         #endregion

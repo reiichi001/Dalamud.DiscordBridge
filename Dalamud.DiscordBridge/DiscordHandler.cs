@@ -111,7 +111,7 @@ namespace Dalamud.DiscordBridge
             this.socketClient.Ready += SocketClientOnReady;
             this.socketClient.MessageReceived += SocketClientOnMessageReceived;
             
-            duplicateFilter = new DuplicateFilter(socketClient);
+            this.duplicateFilter = new DuplicateFilter(this.plugin, this.socketClient);
         }
 
         public async Task Start()
