@@ -214,6 +214,16 @@ namespace Dalamud.DiscordBridge
                         {
                             config.SetUnique(DefaultChatTypes);
                         }
+                        else if (selectedKind == "tell")
+                        {
+                            config.SetUnique(XivChatType.TellOutgoing);
+                            config.SetUnique(XivChatType.TellIncoming);
+                        }
+                        else if (selectedKind == "p")
+                        {
+                            config.SetUnique(XivChatType.Party);
+                            config.SetUnique(XivChatType.CrossParty);
+                        }
                         else
                         {
                             var chatType = XivChatTypeExtensions.GetBySlug(selectedKind);
@@ -265,6 +275,16 @@ namespace Dalamud.DiscordBridge
                         if (selectedKind == "any")
                         {
                             config.UnsetUnique(DefaultChatTypes);
+                        }
+                        else if (selectedKind == "tell")
+                        {
+                            config.UnsetUnique(XivChatType.TellOutgoing);
+                            config.UnsetUnique(XivChatType.TellIncoming);
+                        }
+                        else if (selectedKind == "p")
+                        {
+                            config.UnsetUnique(XivChatType.Party);
+                            config.UnsetUnique(XivChatType.CrossParty);
                         }
                         else
                         {
@@ -320,8 +340,23 @@ namespace Dalamud.DiscordBridge
 
                     foreach (var selectedKind in kinds)
                     {
-                        var type = XivChatTypeExtensions.GetBySlug(selectedKind);
-                        this.plugin.Config.PrefixConfigs[type] = args[2];
+                        // Special handling for chat types that share a type
+                        if (selectedKind == "tell")
+                        {
+                            this.plugin.Config.PrefixConfigs[XivChatType.TellOutgoing] = args[2];
+                            this.plugin.Config.PrefixConfigs[XivChatType.TellIncoming] = args[2];
+                        }
+                        else if (selectedKind == "p")
+                        {
+                            this.plugin.Config.PrefixConfigs[XivChatType.Party] = args[2];
+                            this.plugin.Config.PrefixConfigs[XivChatType.CrossParty] = args[2];
+                        }
+                        else
+                        {
+                            var type = XivChatTypeExtensions.GetBySlug(selectedKind);
+                            this.plugin.Config.PrefixConfigs[type] = args[2];
+                        }
+
                     }
 
                     this.plugin.Config.Save();
@@ -365,7 +400,26 @@ namespace Dalamud.DiscordBridge
                     foreach (var selectedKind in kinds)
                     {
                         var type = XivChatTypeExtensions.GetBySlug(selectedKind);
-                        this.plugin.Config.PrefixConfigs.Remove(type);
+                        // Special handling for chat types that share a type
+                        if (selectedKind == "tell")
+                        {
+                            if (this.plugin.Config.PrefixConfigs.ContainsKey(XivChatType.TellOutgoing))
+                                this.plugin.Config.PrefixConfigs.Remove(XivChatType.TellOutgoing);
+                            if (this.plugin.Config.PrefixConfigs.ContainsKey(XivChatType.TellIncoming))
+                                this.plugin.Config.PrefixConfigs.Remove(XivChatType.TellIncoming);
+                        }
+                        else if (selectedKind == "p")
+                        {
+                            if (this.plugin.Config.PrefixConfigs.ContainsKey(XivChatType.Party))
+                                this.plugin.Config.PrefixConfigs.Remove(XivChatType.Party);
+                            if (this.plugin.Config.PrefixConfigs.ContainsKey(XivChatType.CrossParty))
+                                this.plugin.Config.PrefixConfigs.Remove(XivChatType.CrossParty);
+                        }
+                        else
+                        {
+                            this.plugin.Config.PrefixConfigs.Remove(type);
+                        }
+                        
                     }
 
                     this.plugin.Config.Save();
@@ -434,8 +488,22 @@ namespace Dalamud.DiscordBridge
                     {
                         foreach (var selectedKind in kinds)
                         {
-                            var type = XivChatTypeExtensions.GetBySlug(selectedKind);
-                            this.plugin.Config.CustomSlugsConfigs[type] = chatChannelOverride;
+                            // Special handling for chat types that share a type
+                            if (selectedKind == "tell")
+                            {
+                                this.plugin.Config.CustomSlugsConfigs[XivChatType.TellOutgoing] = chatChannelOverride;
+                                this.plugin.Config.CustomSlugsConfigs[XivChatType.TellIncoming] = chatChannelOverride;
+                            }
+                            else if (selectedKind == "p")
+                            {
+                                this.plugin.Config.CustomSlugsConfigs[XivChatType.Party] = chatChannelOverride;
+                                this.plugin.Config.CustomSlugsConfigs[XivChatType.CrossParty] = chatChannelOverride;
+                            }
+                            else
+                            {
+                                var type = XivChatTypeExtensions.GetBySlug(selectedKind);
+                                this.plugin.Config.CustomSlugsConfigs[type] = chatChannelOverride;
+                            }
                         }
 
                         await SendGenericEmbed(message.Channel,
@@ -673,6 +741,26 @@ namespace Dalamud.DiscordBridge
                 .ConfigureAwait(false);
         }
 
+        private async Task SendPrettyEmbed(ISocketMessageChannel channel, string message, string title, string iconurl, uint color)
+        {
+            var builder = new EmbedBuilder()
+                .WithTitle(title)
+                .WithDescription(message)
+                .WithColor(new Color(color))
+                .WithFooter(footer => {
+                    footer
+                        .WithText("Dalamud Discord Bridge")
+                        .WithIconUrl(Constant.LogoLink);
+                })
+                .WithThumbnailUrl(iconurl);
+
+            var embed = builder.Build();
+            await channel.SendMessageAsync(
+                    null,
+                    embed: embed)
+                .ConfigureAwait(false);
+        }
+
         /// <summary>
         /// Check if the sender of this message is set as the owner of this plugin, and send an error message to the specified channel if not null.
         /// </summary>
@@ -721,10 +809,20 @@ namespace Dalamud.DiscordBridge
                     PluginLog.Error("Could not find channel {0} for {1}", channelConfig.Key, chatType);
                     continue;
                 }
-                
-                var webhookClient = await GetOrCreateWebhookClient(socketChannel);
-                await webhookClient.SendMessageAsync($"{prefix} {message}",
-                    username: $"Retainer sold {name}", avatarUrl: iconurl);
+
+                // add handling for webhook vs embed here
+                if (socketChannel is SocketDMChannel)
+                {
+                    var DMChannel = await this.socketClient.GetDMChannelAsync(channelConfig.Key);
+                    await SendPrettyEmbed((ISocketMessageChannel)DMChannel, message, $"Retainer sold {name}", iconurl, EmbedColorFine);
+                }
+                else
+                {
+                    var webhookClient = await GetOrCreateWebhookClient(socketChannel);
+                    await webhookClient.SendMessageAsync($"{prefix} {message}",
+                        username: $"Retainer sold {name}", avatarUrl: iconurl);
+                }
+                    
             }
 
         }
@@ -863,18 +961,29 @@ namespace Dalamud.DiscordBridge
                     continue;
                 }
 
-                if (duplicateFilter.CheckAlreadySent(socketChannel, slug: chatTypeText, displayName, chatText: message))
-                {
-                    continue;
-                }
-
-                var webhookClient = await GetOrCreateWebhookClient(socketChannel);
                 var messageContent = chatType != XivChatTypeExtensions.IpcChatType ? $"{prefix}**[{chatTypeText}]** {message}" : $"{prefix} {message}";
 
-                await webhookClient.SendMessageAsync(
-                    messageContent,username: displayName, avatarUrl: avatarUrl, 
-                    allowedMentions: new AllowedMentions(AllowedMentionTypes.Roles | AllowedMentionTypes.Users | AllowedMentionTypes.None)
-                );
+
+                // add handling for webhook vs embed here
+                if (socketChannel is SocketDMChannel)
+                {
+                    var DMChannel = await this.socketClient.GetDMChannelAsync(channelConfig.Key);
+                    await SendPrettyEmbed((ISocketMessageChannel)DMChannel, messageContent, displayName, avatarUrl, EmbedColorFine);
+                }
+                else
+                {
+                    var webhookClient = await GetOrCreateWebhookClient(socketChannel);
+
+                    if (duplicateFilter.CheckAlreadySent(socketChannel, slug: chatTypeText, displayName, chatText: message))
+                    {
+                        continue;
+                    }
+
+                    await webhookClient.SendMessageAsync(
+                        messageContent, username: displayName, avatarUrl: avatarUrl,
+                        allowedMentions: new AllowedMentions(AllowedMentionTypes.Roles | AllowedMentionTypes.Users | AllowedMentionTypes.None)
+                    );
+                }
             }
         }
 
@@ -912,9 +1021,21 @@ namespace Dalamud.DiscordBridge
 
                 var prefix = this.plugin.Config.CFPrefixConfig ?? "";
 
-                var webhookClient = await GetOrCreateWebhookClient(socketChannel);
-                await webhookClient.SendMessageAsync($"{prefix}", embeds: new[] {embedBuilder.Build()},
+                // add handling for webhook vs embed here
+                if (socketChannel is SocketDMChannel)
+                {
+                    embedBuilder.WithAuthor(new EmbedAuthorBuilder {Name = "Dalamud Discord Bridge", IconUrl = Constant.LogoLink});
+                    var DMChannel = await this.socketClient.GetDMChannelAsync(channelConfig.Key);
+                    await DMChannel.SendMessageAsync($"{prefix}", embed: embedBuilder.Build());
+                }
+                else
+                {
+                    var webhookClient = await GetOrCreateWebhookClient(socketChannel);
+                    await webhookClient.SendMessageAsync($"{prefix}", embeds: new[] { embedBuilder.Build() },
                     username: "Dalamud Discord Bridge", avatarUrl: Constant.LogoLink);
+                }
+
+                
             }
         }
 

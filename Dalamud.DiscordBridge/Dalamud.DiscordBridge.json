@@ -7,5 +7,4 @@
   "ApplicableVersion": "any",
   "Tags": [ "discord", "chat" ],
   "Punchline": "Receive your chat messages via Discord.",
-  "Changelog": "Switched from XIVAPI search to NetStone. Also fixed a code typo that caused it to always fail."
 }

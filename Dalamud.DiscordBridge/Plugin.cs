@@ -12,6 +12,7 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.IoC;
+using Dalamud.Logging;
 using Dalamud.Plugin;
 using Lumina.Excel.GeneratedSheets;
 
@@ -44,6 +45,30 @@ namespace Dalamud.DiscordBridge
         {
             this.Config = (Configuration)this.Interface.GetPluginConfig() ?? new Configuration();
             this.Config.Initialize(this.Interface);
+
+            // sanity check - ensure there are no invalid types leftover from past versions.
+            foreach (DiscordChannelConfig config in this.Config.ChannelConfigs.Values)
+            {
+                for (int i = 0; i < config.ChatTypes.Count; i++)
+                {
+                    XivChatType xct = config.ChatTypes[i];
+                    if ((int)xct > 127)
+                    {
+                        config.ChatTypes[i] = (XivChatType)((int)xct & 0x7F);
+                        this.Config.Save();
+                    }
+                    try
+                    {
+                        xct.GetInfo();
+                    }
+                    catch (ArgumentException)
+                    {
+                        PluginLog.Error($"Removing invalid chat type before it could cause problems ({(int)xct}){xct}.");
+                        config.ChatTypes.RemoveAt(i--);
+                        this.Config.Save();
+                    }
+                }
+            }
 
             
             this.DiscordBridgeProvider = new DiscordBridgeProvider(this.Interface, new DiscordBridgeAPI(this));
@@ -96,7 +121,7 @@ namespace Dalamud.DiscordBridge
             {
                 this.Discord.MessageQueue.Enqueue(new QueuedChatEvent
                 {
-                    ChatType = type,
+                    ChatType = (XivChatType)((int)type & 0x7F), // strip off the sender mask subtype
                     Message = message,
                     Sender = sender
                 });
@@ -116,9 +141,10 @@ namespace Dalamud.DiscordBridge
         [DoNotShowInHelp]
         public void DebugCommand(string command, string args)
         {
+            string[] commandArgs = args.Split(' ');
             this.Discord.MessageQueue.Enqueue(new QueuedChatEvent
             {
-                ChatType = XivChatType.Say,
+                ChatType = XivChatTypeExtensions.GetBySlug(commandArgs?[0] ?? "e"),
                 Message = new SeString(new Payload[]{new TextPayload("Test Message"), }),
                 Sender = new SeString(new Payload[]{new TextPayload("Test Sender"), })
             });
@@ -156,7 +182,7 @@ namespace Dalamud.DiscordBridge
         {
             foreach (var keyValuePair in XivChatTypeExtensions.TypeInfoDict)
             {
-                Chat.Print($"{keyValuePair.Key.GetSlug()} - {keyValuePair.Key.GetFancyName()}");
+                Chat.Print($"({(int)keyValuePair.Key}) {keyValuePair.Key.GetSlug()} - {keyValuePair.Key.GetFancyName()}");
             }
         }
 
@@ -176,8 +202,6 @@ namespace Dalamud.DiscordBridge
             this.Interface.UiBuilder.Draw -= this.ui.Draw;
 
             this.State.CfPop -= this.ClientStateOnCfPop;
-
-            //this.Interface.Dispose();
         }
 
         public void Dispose()
