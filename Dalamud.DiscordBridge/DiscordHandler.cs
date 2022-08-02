@@ -946,17 +946,13 @@ namespace Dalamud.DiscordBridge
                 {
                     PluginLog.Error("Could not find channel {0} for {1}", channelConfig.Key, chatType);
 
-                    // There is a specific circumstance where an exception within SendChatEvent() will cause GetChannel()
-                    // to temporarily no result (not found) which then results in configurations for multiple channels
-                    // being cleared below.
+                    var channelConfigs = this.plugin.Config.ChannelConfigs;
+                    channelConfigs.Remove(channelConfig.Key);
+                    this.plugin.Config.ChannelConfigs = channelConfigs;
 
-                    // Disabled the following to prevent losing channel configuration.
-                    // var channelConfigs = this.plugin.Config.ChannelConfigs;
-                    // channelConfigs.Remove(channelConfig.Key);
-                    // this.plugin.Config.ChannelConfigs = channelConfigs;
-                    //
-                    // PluginLog.Log("Removing channel {0}'s config because it no longer exists or cannot be accessed.", channelConfig.Key);
-                    // this.plugin.Config.Save();
+
+                    PluginLog.Log("Removing channel {0}'s config because it no longer exists or cannot be accessed.", channelConfig.Key);
+                    this.plugin.Config.Save();
                     
                     continue;
                 }
