@@ -99,7 +99,6 @@ namespace Dalamud.DiscordBridge
                 .ToArray(); // Convert to array to avoid multiple enumeration below.
 
             // Holds deleted messages so that they can be removed from recents later.
-            //todo Since this function has been refactored, this set may no longer be necessary
             var deleted = new HashSet<SocketMessage>();
             
             // Compare every message to every other message to check for duplicates.
