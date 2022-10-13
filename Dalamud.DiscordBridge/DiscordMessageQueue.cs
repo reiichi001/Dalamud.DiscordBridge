@@ -46,6 +46,7 @@ namespace Dalamud.DiscordBridge
             }
         };
 
+
         public DiscordMessageQueue(Plugin plugin)
         {
             this.plugin = plugin;
@@ -271,14 +272,48 @@ namespace Dalamud.DiscordBridge
                                     messagetext += ((ITextProvider)x).Text;
                                 }
                             });
-
-                            try
+                            // This indicates whether the message should be relayed to discord. By default, it should be
+                            bool messageShouldBeSent = true;
+                            // First check the blocking regex. If this regex matches, the message should not be sent
+                            if (this.plugin.Config.BlockRegexes.ContainsKey(chatEvent.ChatType))
                             {
-                                await this.plugin.Discord.SendChatEvent(messagetext, senderName.TextValue, senderWorld, chatEvent.ChatType, chatEvent.AvatarUrl);
+                                try
+                                {
+                                    // The message should only be sent if the blocking regex does not find a match
+                                    messageShouldBeSent = !this.plugin.Config.BlockRegexes[chatEvent.ChatType].Match(messagetext).Success;
+                                }
+                                catch (Exception e)
+                                {
+                                    PluginLog.Error(e, "Failed to match message using regex.");
+                                }
                             }
-                            catch (Exception e)
+                            // Next check the allowing regex. If this regex matches, the message should not be sent
+                            // We only check this if the blocklist has not already blocked the message
+                            if (messageShouldBeSent && this.plugin.Config.AllowRegexes.ContainsKey(chatEvent.ChatType))
                             {
-                                PluginLog.Error(e, "Could not send discord message.");
+                                // If an allowing regex exists, we should disallow the message to be sent by default
+                                messageShouldBeSent = false;
+                                try
+                                {
+                                    // If the allowlist finds a match, the message should be sent
+                                    messageShouldBeSent = this.plugin.Config.AllowRegexes[chatEvent.ChatType].Match(messagetext).Success;
+                                }
+                                catch (Exception e)
+                                {
+                                    PluginLog.Error(e, "Failed to match message using regex.");
+                                }
+                            }
+                            // Finally, we send the message if it's allowed
+                            if (messageShouldBeSent)
+                            {
+                                try
+                                {
+                                    await this.plugin.Discord.SendChatEvent(messagetext, senderName.TextValue, senderWorld, chatEvent.ChatType, chatEvent.AvatarUrl);
+                                }
+                                catch (Exception e)
+                                {
+                                    PluginLog.Error(e, "Could not send discord message.");
+                                }
                             }
                         }
 
