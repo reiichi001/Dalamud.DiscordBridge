@@ -96,6 +96,11 @@ namespace Dalamud.DiscordBridge
 
         private LodestoneClient lodestoneClient;
 
+        /// <summary>
+        /// This is used to parse arguments out of a discord command message
+        /// </summary>
+        private readonly Regex arg_parse_regex = new Regex("(?<=\")[^\"]*(?=\")|[^\" ]+");
+
         public DiscordHandler(Plugin plugin)
         {
             this.plugin = plugin;
@@ -159,7 +164,7 @@ namespace Dalamud.DiscordBridge
             if (message.Author.IsBot || message.Author.IsWebhook)
                 return;
 
-            var args = message.Content.Split();
+            var args = this.arg_parse_regex.Matches(message.Content).Cast<Match>().Select(m => m.Value).ToArray();
 
             // if it doesn't start with the bot prefix, ignore it.
             if (!args[0].StartsWith(this.plugin.Config.DiscordBotPrefix))
@@ -916,6 +921,234 @@ namespace Dalamud.DiscordBridge
                         .ConfigureAwait(false);
                     ;
                     PluginLog.Verbose(m.Id.ToString());
+
+                    return;
+                }
+
+                if (args[0] == this.plugin.Config.DiscordBotPrefix + "setblock" &&
+                         await EnsureOwner(message.Author, message.Channel))
+                {
+                    // Are there parameters?
+                    if (args.Length == 1)
+                    {
+                        await SendGenericEmbed(message.Channel,
+                            $"You need to specify some chat kinds to use.\nCheck the ``{this.plugin.Config.DiscordBotPrefix}help`` command for more information.",
+                            "Error", EmbedColorError);
+
+                        return;
+                    }
+                    if (args.Length == 2)
+                    {
+                        await SendGenericEmbed(message.Channel,
+                            $"You need to specify a regex.\nCheck the ``{this.plugin.Config.DiscordBotPrefix}help`` command for more information.",
+                            "Error", EmbedColorError);
+
+                        return;
+                    }
+                    var kinds = args[1].Split(',').Select(x => x.ToLower());
+
+                    // Is there any chat type that's not recognized?
+                    if (kinds
+                        .Any(x =>
+                        XivChatTypeExtensions.TypeInfoDict.All(y => y.Value.Slug != x) && x != "any"))
+                    {
+                        PluginLog.Verbose("Could not find kinds");
+                        await SendGenericEmbed(message.Channel,
+                            $"One or more of the chat kinds you specified could not be found.\nCheck the ``{this.plugin.Config.DiscordBotPrefix}help`` command for more information.",
+                            "Error", EmbedColorError);
+
+                        return;
+                    }
+
+                    Regex filterRegex = null;
+
+                    if (args[2] != "none")
+                    {
+                        try
+                        {
+                            filterRegex = new Regex(args[2]);
+                        }
+                        catch (Exception ex)
+                        {
+                            PluginLog.Verbose(ex, "Failed to parse regex");
+                            await SendGenericEmbed(message.Channel,
+                                $"OYou specified .\nCheck the ``{this.plugin.Config.DiscordBotPrefix}help`` command for more information.",
+                                "Error", EmbedColorError);
+                            return;
+                        }
+                    }
+
+                    foreach (var selectedKind in kinds)
+                    {
+                        if (filterRegex is not null)
+                        {
+                            // Special handling for chat types that share a type
+                            if (selectedKind == "tell")
+                            {
+                                this.plugin.Config.BlockRegexes[XivChatType.TellOutgoing] = filterRegex;
+                                this.plugin.Config.BlockRegexes[XivChatType.TellIncoming] = filterRegex;
+                            }
+                            else if (selectedKind == "p")
+                            {
+                                this.plugin.Config.BlockRegexes[XivChatType.Party] = filterRegex;
+                                this.plugin.Config.BlockRegexes[XivChatType.CrossParty] = filterRegex;
+                            }
+                            else
+                            {
+                                var type = XivChatTypeExtensions.GetBySlug(selectedKind);
+                                this.plugin.Config.BlockRegexes[type] = filterRegex;
+                            }
+                        }
+                        else
+                        {
+                            // Special handling for chat types that share a type
+                            if (selectedKind == "tell")
+                            {
+                                this.plugin.Config.BlockRegexes.Remove(XivChatType.TellOutgoing);
+                                this.plugin.Config.BlockRegexes.Remove(XivChatType.TellIncoming);
+                            }
+                            else if (selectedKind == "p")
+                            {
+                                this.plugin.Config.BlockRegexes.Remove(XivChatType.Party);
+                                this.plugin.Config.BlockRegexes.Remove(XivChatType.CrossParty);
+                            }
+                            else
+                            {
+                                var type = XivChatTypeExtensions.GetBySlug(selectedKind);
+                                this.plugin.Config.BlockRegexes.Remove(type);
+                            }
+                        }
+
+                    }
+
+                    this.plugin.Config.Save();
+
+                    if (filterRegex is not null)
+                    {
+                        await SendGenericEmbed(message.Channel,
+                        $"OK! The block regex {args[2]} is set for\n\n```\n{this.plugin.Config.BlockRegexes.Select(x => $"{x.Key.GetFancyName()} - {x.Value}").Aggregate((x, y) => x + "\n" + y)}```",
+                        "Block regex set", EmbedColorFine);
+                    }
+                    else
+                    {
+                        await SendGenericEmbed(message.Channel,
+                        $"OK! The block regex has been removed for\n\n```\n{kinds.Select(x => XivChatTypeExtensions.GetBySlug(x).GetFancyName()).Aggregate((x, y) => x + "\n" + y)}```",
+                        "Block regex removed", EmbedColorFine);
+                    }
+                    
+
+                    return;
+                }
+                if (args[0] == this.plugin.Config.DiscordBotPrefix + "setallow" &&
+                         await EnsureOwner(message.Author, message.Channel))
+                {
+                    // Are there parameters?
+                    if (args.Length == 1)
+                    {
+                        await SendGenericEmbed(message.Channel,
+                            $"You need to specify some chat kinds to use.\nCheck the ``{this.plugin.Config.DiscordBotPrefix}help`` command for more information.",
+                            "Error", EmbedColorError);
+
+                        return;
+                    }
+                    if (args.Length == 2)
+                    {
+                        await SendGenericEmbed(message.Channel,
+                            $"You need to specify a regex.\nCheck the ``{this.plugin.Config.DiscordBotPrefix}help`` command for more information.",
+                            "Error", EmbedColorError);
+
+                        return;
+                    }
+                    var kinds = args[1].Split(',').Select(x => x.ToLower());
+
+                    // Is there any chat type that's not recognized?
+                    if (kinds
+                        .Any(x =>
+                        XivChatTypeExtensions.TypeInfoDict.All(y => y.Value.Slug != x) && x != "any"))
+                    {
+                        PluginLog.Verbose("Could not find kinds");
+                        await SendGenericEmbed(message.Channel,
+                            $"One or more of the chat kinds you specified could not be found.\nCheck the ``{this.plugin.Config.DiscordBotPrefix}help`` command for more information.",
+                            "Error", EmbedColorError);
+
+                        return;
+                    }
+
+                    Regex filterRegex = null;
+                    if (args[2] != "none")
+                    {
+                        try
+                        {
+                            filterRegex = new Regex(args[2]);
+                        }
+                        catch (Exception ex)
+                        {
+                            PluginLog.Verbose(ex, "Failed to parse regex");
+                            await SendGenericEmbed(message.Channel,
+                                $"OYou specified .\nCheck the ``{this.plugin.Config.DiscordBotPrefix}help`` command for more information.",
+                                "Error", EmbedColorError);
+                            return;
+                        }
+                    }
+
+                    foreach (var selectedKind in kinds)
+                    {
+                        if (filterRegex is not null)
+                        {
+                            // Special handling for chat types that share a type
+                            if (selectedKind == "tell")
+                            {
+                                this.plugin.Config.AllowRegexes[XivChatType.TellOutgoing] = filterRegex;
+                                this.plugin.Config.AllowRegexes[XivChatType.TellIncoming] = filterRegex;
+                            }
+                            else if (selectedKind == "p")
+                            {
+                                this.plugin.Config.AllowRegexes[XivChatType.Party] = filterRegex;
+                                this.plugin.Config.AllowRegexes[XivChatType.CrossParty] = filterRegex;
+                            }
+                            else
+                            {
+                                var type = XivChatTypeExtensions.GetBySlug(selectedKind);
+                                this.plugin.Config.AllowRegexes[type] = filterRegex;
+                            }
+                        }
+                        else
+                        {
+                            // Special handling for chat types that share a type
+                            if (selectedKind == "tell")
+                            {
+                                this.plugin.Config.AllowRegexes.Remove(XivChatType.TellOutgoing);
+                                this.plugin.Config.AllowRegexes.Remove(XivChatType.TellIncoming);
+                            }
+                            else if (selectedKind == "p")
+                            {
+                                this.plugin.Config.AllowRegexes.Remove(XivChatType.Party);
+                                this.plugin.Config.AllowRegexes.Remove(XivChatType.CrossParty);
+                            }
+                            else
+                            {
+                                var type = XivChatTypeExtensions.GetBySlug(selectedKind);
+                                this.plugin.Config.AllowRegexes.Remove(type);
+                            }
+                        }
+
+                    }
+
+                    this.plugin.Config.Save();
+
+
+                    if (filterRegex is not null)
+                    {
+                        await SendGenericEmbed(message.Channel,
+                        $"OK! The allow regex {args[2]} is set for\n\n```\n{this.plugin.Config.AllowRegexes.Select(x => $"{x.Key.GetFancyName()} - {x.Value}").Aggregate((x, y) => x + "\n" + y)}```",
+                        "Allow regex set", EmbedColorFine);
+                    }
+                    else
+                    {
+                        await SendGenericEmbed(message.Channel,
+                        $"OK! The allow regex has been removed for\n\n```\n{kinds.Select(x => XivChatTypeExtensions.GetBySlug(x).GetFancyName()).Aggregate((x, y) => x + "\n" + y)}```",
+                        "Allow regex removed", EmbedColorFine);
+                    }
 
                     return;
                 }
