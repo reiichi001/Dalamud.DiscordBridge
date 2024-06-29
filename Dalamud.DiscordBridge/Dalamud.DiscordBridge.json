@@ -6,5 +6,5 @@
   "RepoUrl": "https://github.com/reiichi001/Dalamud.DiscordBridge",
   "Tags": [ "discord", "chat" ],
   "Punchline": "Receive your chat messages via Discord.",
-  "Changelog": "Updated for 6.5 / API 9"
+  "Changelog": "Updated for 7.0 / API 10"
 }

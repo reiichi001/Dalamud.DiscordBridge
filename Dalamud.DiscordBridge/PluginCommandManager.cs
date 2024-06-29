@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Dalamud.DiscordBridge.Attributes;
-using static Dalamud.Game.Command.CommandInfo;
 using Dalamud.Plugin.Services;
+using static Dalamud.Game.Command.IReadOnlyCommandInfo;
 // ReSharper disable ForCanBeConvertedToForeach
 
 namespace Dalamud.DiscordBridge

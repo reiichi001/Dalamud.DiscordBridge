@@ -11,9 +11,9 @@ namespace Dalamud.DiscordBridge.XivApi
     {
         private const string URL = "https://xivapi.com/";
 
-        private static readonly ConcurrentDictionary<string, JObject> CachedResponses = new ConcurrentDictionary<string, JObject>();
+        private static readonly ConcurrentDictionary<string, JObject> CachedResponses = new();
 
-        static IPluginLog Logger = Service.Logger;
+        static readonly IPluginLog Logger = Service.Logger;
 
         /// <summary>
         /// Returns the searched character, or null if not found.

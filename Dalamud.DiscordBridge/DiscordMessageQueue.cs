@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using Dalamud.DiscordBridge.Model;
 using Dalamud.Game.Text;
@@ -14,33 +12,13 @@ namespace Dalamud.DiscordBridge
 {
     public class DiscordMessageQueue
     {
-        static IPluginLog Logger = Service.Logger;
+        static readonly IPluginLog Logger = Service.Logger;
         private volatile bool runQueue = true;
 
         private readonly DiscordBridgePlugin Plugin;
         private readonly Thread runnerThread;
 
-        private readonly ConcurrentQueue<QueuedXivEvent> eventQueue = new ConcurrentQueue<QueuedXivEvent>();
-
-        private readonly Dictionary<ClientLanguage, Regex[]> retainerSaleRegexes = new Dictionary<ClientLanguage, Regex[]>() { {
-                ClientLanguage.Japanese, new Regex[] {
-                    new Regex(@"^(?:.+)マーケットに(?<origValue>[\d,.]+)ギルで出品した(?<item>.*)×(?<count>[\d,.]+)が売れ、(?<value>[\d,.]+)ギルを入手しました。$", RegexOptions.Compiled),
-                    new Regex(@"^(?:.+)マーケットに(?<origValue>[\d,.]+)ギルで出品した(?<item>.*)が売れ、(?<value>[\d,.]+)ギルを入手しました。$", RegexOptions.Compiled) }
-            }, {
-                ClientLanguage.English, new Regex[] {
-                    new Regex(@"^(?<item>.+) you put up for sale in the (?:.+) markets (?:have|has) sold for (?<value>[\d,.]+) gil \(after fees\)\.$", RegexOptions.Compiled)
-                }
-            }, {
-                ClientLanguage.German, new Regex[] {
-                    new Regex(@"^Dein Gehilfe hat (?<item>.+) auf dem Markt von (?:.+) für (?<value>[\d,.]+) Gil verkauft\.$", RegexOptions.Compiled),
-                    new Regex(@"^Dein Gehilfe hat (?<item>.+) auf dem Markt von (?:.+) verkauft und (?<value>[\d,.]+) Gil erhalten\.$", RegexOptions.Compiled)
-                }
-            }, {
-                ClientLanguage.French, new Regex[] {
-                    new Regex(@"^Un servant a vendu (?<item>.+) pour (?<value>[\d,.]+) gil à (?:.+)\.$", RegexOptions.Compiled)
-                }
-            }
-        };
+        private readonly ConcurrentQueue<QueuedXivEvent> eventQueue = new();
 
         public DiscordMessageQueue(DiscordBridgePlugin plugin)
         {
@@ -82,12 +60,10 @@ namespace Dalamud.DiscordBridge
                                 {
                                     //var matchInfo = regex.Match(retainerSaleEvent.Message.TextValue);
 
-                                    var itemLink =
-                                    retainerSaleEvent.Message.Payloads.First(x => x.Type == PayloadType.Item) as ItemPayload;
 
                                     var avatarUrl = Constant.LogoLink;
 
-                                    if (itemLink == null)
+                                    if (retainerSaleEvent.Message.Payloads.First(x => x.Type == PayloadType.Item) is not ItemPayload itemLink)
                                     {
                                         Logger.Error("itemLink was null. Msg: {0}", BitConverter.ToString(retainerSaleEvent.Message.Encode()));
                                         break;
@@ -149,9 +125,7 @@ namespace Dalamud.DiscordBridge
                             {
                                 if (Service.State.LocalPlayer != null)
                                 {
-                                    var playerLink = chatEvent.Sender.Payloads.FirstOrDefault(x => x.Type == PayloadType.Player) as PlayerPayload;
-
-                                    if (playerLink == null)
+                                    if (chatEvent.Sender.Payloads.FirstOrDefault(x => x.Type == PayloadType.Player) is not PlayerPayload playerLink)
                                     {
                                         // chat messages from the local player do not include a player link, and are just the raw name
                                         // but we should still track other instances to know if this is ever an issue otherwise
@@ -213,9 +187,9 @@ namespace Dalamud.DiscordBridge
                                                     senderName = chatEvent.Sender.TextValue;
                                                     break;
                                             }
-                                            
 
-                                            
+
+
                                         }
 
                                         // only if we still need one
@@ -262,9 +236,9 @@ namespace Dalamud.DiscordBridge
                                 {
                                     messagetext += "**";
                                 }
-                                else if (x is ITextProvider)
+                                else if (x is ITextProvider provider)
                                 {
-                                    messagetext += ((ITextProvider)x).Text;
+                                    messagetext += provider.Text;
                                 }
                             });
 

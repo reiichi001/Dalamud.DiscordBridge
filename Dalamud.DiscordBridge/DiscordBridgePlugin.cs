@@ -6,8 +6,6 @@ using Dalamud.DiscordBridge.Model;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.IoC;
-using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.GeneratedSheets;
@@ -17,14 +15,14 @@ namespace Dalamud.DiscordBridge
     public class DiscordBridgePlugin : IDalamudPlugin
     {
         public static DiscordBridgePlugin Plugin { get; private set; }
-        private PluginCommandManager<DiscordBridgePlugin> commandManager;
-        private PluginUI ui;
+        private readonly PluginCommandManager<DiscordBridgePlugin> commandManager;
+        private readonly PluginUI ui;
 
         public DiscordHandler Discord;
         public Configuration Config;
         public DiscordBridgeProvider DiscordBridgeProvider;
 
-        static IPluginLog Logger = Service.Logger;
+        static readonly IPluginLog Logger = Service.Logger;
 
         public DiscordBridgePlugin(DalamudPluginInterface pluginInterface, ICommandManager command)
         {
@@ -94,7 +92,7 @@ namespace Dalamud.DiscordBridge
             });
         }
 
-        private void ChatOnOnChatMessage(XivChatType type, uint senderid, ref SeString sender, ref SeString message, ref bool ishandled)
+        private void ChatOnOnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool ishandled)
         {
             if (ishandled) return; // don't process a message that's been handled.
 
@@ -124,6 +122,7 @@ namespace Dalamud.DiscordBridge
             this.ui.Show();
         }
 
+        
         [Command("/pdiscord")]
         [HelpMessage("Show settings for the discord bridge plugin.")]
         public void OpenSettingsCommand(string command, string args)
@@ -131,8 +130,9 @@ namespace Dalamud.DiscordBridge
             this.ui.Show();
         }
 
+        
         [Command("/ddebug")]
-        [HelpMessage("Show settings for the discord bridge plugin.")]
+        [HelpMessage("Send a debug message using a particular chat type")]
         [DoNotShowInHelp]
         public void DebugCommand(string command, string args)
         {
@@ -144,15 +144,15 @@ namespace Dalamud.DiscordBridge
                 Sender = new SeString(new Payload[]{new TextPayload("Test Sender"), })
             });
         }
-
+        
         [Command("/dsaledebug")]
-        [HelpMessage("Show settings for the discord bridge plugin.")]
+        [HelpMessage("Send a fake item sale chat payload.")]
         [DoNotShowInHelp]
         public void SaleDebugCommand(string command, string args)
         {
             // make a sample sale message. This is using Titanium Ore for an item
             Item sampleitem = Service.Data.GetExcelSheet<Item>().GetRow(12537);
-            SeString sameplesale = new SeString(new Payload[] { new TextPayload("The "), new ItemPayload(sampleitem.RowId, true), new TextPayload(sampleitem.Name), new TextPayload(" you put up for sale in the Crystarium markets has sold for 777 gil (after fees).") });
+            SeString sameplesale = new(new Payload[] { new TextPayload("The "), new ItemPayload(sampleitem.RowId, true), new TextPayload(sampleitem.Name), new TextPayload(" you put up for sale in the Crystarium markets has sold for 777 gil (after fees).") });
 
             // Logger.Information($"Trying to make a fake sale: {sameplesale.TextValue}");
 
@@ -171,16 +171,18 @@ namespace Dalamud.DiscordBridge
 
         }
 
+        
         [Command("/dprintlist")]
-        [HelpMessage("Show settings for the discord bridge plugin.")]
+        [HelpMessage("Dump all plugin config to chat box.")]
         [DoNotShowInHelp]
         public void ListCommand(string command, string args)
         {
             foreach (var keyValuePair in XivChatTypeExtensions.TypeInfoDict)
             {
-                Service.Chat.Print($"({(int)keyValuePair.Key}) {keyValuePair.Key.GetSlug()} - {keyValuePair.Key.GetFancyName()}");
+                 Service.Chat.Print($"({(int)keyValuePair.Key}) {keyValuePair.Key.GetSlug()} - {keyValuePair.Key.GetFancyName()}");
             }
         }
+        
 
         #region IDisposable Support
         protected virtual void Dispose(bool disposing)

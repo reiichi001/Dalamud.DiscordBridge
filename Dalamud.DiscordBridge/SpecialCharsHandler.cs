@@ -11,7 +11,7 @@ namespace Dalamud.DiscordBridge
     {
         private Dictionary<char, string> charsDict;
 
-        private readonly object dictLock = new object();
+        private readonly object dictLock = new();
 
         private string hqEmote;
         private string atlEmote;

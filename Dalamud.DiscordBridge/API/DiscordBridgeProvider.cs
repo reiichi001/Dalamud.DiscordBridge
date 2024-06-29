@@ -7,7 +7,7 @@ namespace Dalamud.DiscordBridge.API
 {
     public class DiscordBridgeProvider
     {
-        static IPluginLog Logger = Service.Logger;
+        static readonly IPluginLog Logger = Service.Logger;
 
         private const string LabelProviderApiVersion = "DiscordBridge.APIVersion";
         private const string LabelProviderSendMessage = "DiscordBridge.SendMessage";

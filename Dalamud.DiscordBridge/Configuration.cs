@@ -20,12 +20,12 @@ namespace Dalamud.DiscordBridge
         public string DiscordBotPrefix { get; set; } = "xl!";
 
         public string DefaultAvatarURL = Constant.LogoLink;
-        public Dictionary<XivChatType, string> ChatTypeAvatarURL { get; set; } = new Dictionary<XivChatType, string>();
+        public Dictionary<XivChatType, string> ChatTypeAvatarURL { get; set; } = [];
 
-        public Dictionary<ulong, DiscordChannelConfig> ChannelConfigs { get; set; } = new Dictionary<ulong, DiscordChannelConfig>();
-        public Dictionary<XivChatType, string> PrefixConfigs { get; set; } = new Dictionary<XivChatType, string>();
+        public Dictionary<ulong, DiscordChannelConfig> ChannelConfigs { get; set; } = [];
+        public Dictionary<XivChatType, string> PrefixConfigs { get; set; } = [];
 
-        public Dictionary<XivChatType, string> CustomSlugsConfigs { get; set; } = new Dictionary<XivChatType, string>();
+        public Dictionary<XivChatType, string> CustomSlugsConfigs { get; set; } = [];
         public string CFPrefixConfig { get; set; } = "";
         public bool ForceDefaultNameAvatar { get; set; } = false;
         public bool ForceEmbedFallbackMode { get; set; } = false;

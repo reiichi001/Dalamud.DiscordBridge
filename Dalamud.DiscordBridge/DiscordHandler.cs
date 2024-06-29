@@ -17,7 +17,7 @@ namespace Dalamud.DiscordBridge
 {
     public class DiscordHandler : IDisposable
     {
-        static IPluginLog Logger = Service.Logger;
+        static readonly IPluginLog Logger = Service.Logger;
 
         private readonly DuplicateFilter duplicateFilter;
         
@@ -27,7 +27,7 @@ namespace Dalamud.DiscordBridge
         public bool IsConnected => this.socketClient.ConnectionState == ConnectionState.Connected;
         public ulong UserId => this.socketClient.CurrentUser.Id;
 
-        private static readonly ConcurrentDictionary<string, LodestoneCharacter> CachedResponses = new ConcurrentDictionary<string, LodestoneCharacter>();
+        private static readonly ConcurrentDictionary<string, LodestoneCharacter> CachedResponses = new();
 
         /// <summary>
         /// Defines if the bot has connected and verified that it has the correct permissions
@@ -39,8 +39,8 @@ namespace Dalamud.DiscordBridge
         /// <summary>
         /// Chat types that are set when used the "all" setting.
         /// </summary>
-        private static readonly XivChatType[] DefaultChatTypes = new[]
-        {
+        private static readonly XivChatType[] DefaultChatTypes =
+        [
             XivChatType.Say,
             XivChatType.Shout,
             XivChatType.Yell,
@@ -71,7 +71,7 @@ namespace Dalamud.DiscordBridge
             XivChatType.CrossLinkShell8,
             XivChatType.Echo,
             XivChatType.SystemMessage,
-        };
+        ];
 
         /// <summary>
         /// Embed color signalling that everything is fine.
@@ -293,7 +293,7 @@ namespace Dalamud.DiscordBridge
                     this.plugin.Config.ChannelConfigs[message.Channel.Id] = config;
                     this.plugin.Config.Save();
 
-                    if (config.ChatTypes.Count() == 0)
+                    if (config.ChatTypes.Count == 0)
                     {
                         await SendGenericEmbed(message.Channel,
                         $"All chat kinds have been removed from this channel.",
@@ -400,17 +400,13 @@ namespace Dalamud.DiscordBridge
                         // Special handling for chat types that share a type
                         if (selectedKind == "tell")
                         {
-                            if (this.plugin.Config.PrefixConfigs.ContainsKey(XivChatType.TellOutgoing))
-                                this.plugin.Config.PrefixConfigs.Remove(XivChatType.TellOutgoing);
-                            if (this.plugin.Config.PrefixConfigs.ContainsKey(XivChatType.TellIncoming))
-                                this.plugin.Config.PrefixConfigs.Remove(XivChatType.TellIncoming);
+                            this.plugin.Config.PrefixConfigs.Remove(XivChatType.TellOutgoing);
+                            this.plugin.Config.PrefixConfigs.Remove(XivChatType.TellIncoming);
                         }
                         else if (selectedKind == "p")
                         {
-                            if (this.plugin.Config.PrefixConfigs.ContainsKey(XivChatType.Party))
-                                this.plugin.Config.PrefixConfigs.Remove(XivChatType.Party);
-                            if (this.plugin.Config.PrefixConfigs.ContainsKey(XivChatType.CrossParty))
-                                this.plugin.Config.PrefixConfigs.Remove(XivChatType.CrossParty);
+                            this.plugin.Config.PrefixConfigs.Remove(XivChatType.Party);
+                            this.plugin.Config.PrefixConfigs.Remove(XivChatType.CrossParty);
                         }
                         else
                         {
@@ -421,7 +417,7 @@ namespace Dalamud.DiscordBridge
 
                     this.plugin.Config.Save();
 
-                    if (this.plugin.Config.PrefixConfigs.Count() == 0 )
+                    if (this.plugin.Config.PrefixConfigs.Count == 0 )
                     {
                         await SendGenericEmbed(message.Channel,
                         $"All prefixes have been removed.",
@@ -574,8 +570,7 @@ namespace Dalamud.DiscordBridge
                     }
 
                     // Make sure that it's a number (or assume it is)
-                    int newDelay;
-                    if (!int.TryParse(args[1], out newDelay))
+                    if (!int.TryParse(args[1], out int newDelay))
                     {
                         await SendGenericEmbed(message.Channel,
                             $"You need to specify a positive number in milliseconds to use, or 0 to turn the feature off.\nCheck the ``{this.plugin.Config.DiscordBotPrefix}help`` command for more information.",
@@ -583,7 +578,7 @@ namespace Dalamud.DiscordBridge
 
                         return;
                     }
-                    
+
 
                     if (args[1].ToLower() == "none")
                         newDelay = 0;
@@ -969,7 +964,7 @@ namespace Dalamud.DiscordBridge
             }
         }
 
-        private async Task SendGenericEmbed(ISocketMessageChannel channel, string message, string title, uint color)
+        private static async Task SendGenericEmbed(ISocketMessageChannel channel, string message, string title, uint color)
         {
             var builder = new EmbedBuilder()
                 .WithTitle(title)
@@ -989,7 +984,7 @@ namespace Dalamud.DiscordBridge
                 .ConfigureAwait(false);
         }
 
-        private async Task SendPrettyEmbed(ISocketMessageChannel channel, string message, string title, string iconurl, uint color)
+        private static async Task SendPrettyEmbed(ISocketMessageChannel channel, string message, string title, string iconurl, uint color)
         {
             var builder = new EmbedBuilder()
                 .WithTitle(title)
@@ -1166,7 +1161,7 @@ namespace Dalamud.DiscordBridge
                             Logger.Debug($"Sender Name was {senderName}");
                             doSearch = false;
                         }
-                        else if (!senderName.Contains(" "))
+                        else if (!senderName.Contains(' '))
                         {
                             Logger.Debug($"Sender Name invalid: {senderName}");
                             doSearch = false;
@@ -1180,7 +1175,7 @@ namespace Dalamud.DiscordBridge
                             
                             if (CachedResponses.TryGetValue(playerCacheName, out LodestoneCharacter lschar))
                             {
-                                Logger.Debug($"Retrived cached data for {lschar.Name} {lschar.Avatar.ToString()}");
+                                Logger.Debug($"Retrived cached data for {lschar.Name} {lschar.Avatar}");
                                 avatarUrl = lschar.Avatar.ToString();
                             }
                             else
@@ -1246,7 +1241,10 @@ namespace Dalamud.DiscordBridge
                 {
                     Logger.Error("Could not find channel {0} for {1}", channelConfig.Key, chatType);
 
-                    if (!characterSearchFailed)
+                    // try one more time just in case.
+                    socketChannel = this.socketClient.GetChannel(channelConfig.Key);
+
+                    if (socketChannel is null && !characterSearchFailed)
                     {
                         var channelConfigs = this.plugin.Config.ChannelConfigs;
                         channelConfigs.Remove(channelConfig.Key);
@@ -1376,7 +1374,7 @@ namespace Dalamud.DiscordBridge
 
                     if (webhookClient != null)
                     {
-                        await webhookClient.SendMessageAsync($"{prefix}", embeds: new[] { embedBuilder.Build() },
+                        await webhookClient.SendMessageAsync($"{prefix}", embeds: [embedBuilder.Build()],
                     username: "Dalamud Chat Bridge", avatarUrl: Constant.LogoLink);
                     }
                     else
@@ -1400,43 +1398,54 @@ namespace Dalamud.DiscordBridge
         /// <returns><see cref="IWebhook"/> for the respective channel.</returns>
         private async Task<DiscordWebhookClient> GetOrCreateWebhookClient(SocketChannel channel)
         {
-            if (!(channel is SocketTextChannel textChannel))
-                throw new ArgumentNullException(nameof(textChannel));
-
-            if (!this.plugin.Config.ChannelConfigs.TryGetValue(channel.Id, out var channelConfig))
-                throw new ArgumentException("No configuration for channel.", nameof(channel));
-
-            IWebhook hook;
-            if (channelConfig.WebhookId != 0)
-                hook = await textChannel.GetWebhookAsync(channelConfig.WebhookId) ?? await textChannel.CreateWebhookAsync("FFXIV Bridge Worker");
-            else
+            if (channel is SocketTextChannel textChannel)
             {
-                try
+                if (!this.plugin.Config.ChannelConfigs.TryGetValue(channel.Id, out var channelConfig))
+                    throw new ArgumentException("No configuration for channel.", nameof(channel));
+
+                IWebhook hook;
+                if (channelConfig.WebhookId != 0)
+                    hook = await textChannel.GetWebhookAsync(channelConfig.WebhookId) ?? await textChannel.CreateWebhookAsync("FFXIV Bridge Worker");
+                else
                 {
-                    hook = await textChannel.CreateWebhookAsync("FFXIV Bridge Worker");
+                    try
+                    {
+                        hook = await textChannel.CreateWebhookAsync("FFXIV Bridge Worker");
+                    }
+                    catch (Discord.Net.HttpException e)
+                    {
+                        Logger.Error("Unable to get or create webhook", e.StackTrace);
+                        return null;
+                    }
                 }
-                catch (Discord.Net.HttpException e)
-                {
-                    Logger.Error("Unable to get or create webhook", e.StackTrace);
-                    return null;
-                }
+
+
+                this.plugin.Config.ChannelConfigs[channel.Id].WebhookId = hook.Id;
+                this.plugin.Config.Save();
+
+                Logger.Verbose("Webhook for {0} OK!! {1}", channel.Id, hook.Id);
+
+                return new DiscordWebhookClient(hook);
             }
-                
-            
-            this.plugin.Config.ChannelConfigs[channel.Id].WebhookId = hook.Id;
-            this.plugin.Config.Save();
 
-            Logger.Verbose("Webhook for {0} OK!! {1}", channel.Id, hook.Id);
-
-            return new DiscordWebhookClient(hook);
+            throw new ArgumentNullException(nameof(channel));
         }
 
         public void Dispose()
         {
-            Logger.Verbose("Discord DISPOSE!!");
-            this.MessageQueue?.Stop();
-            this.socketClient?.LogoutAsync().GetAwaiter().GetResult();
-            this.socketClient?.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Logger.Verbose("Discord DISPOSE!!");
+                this.MessageQueue?.Stop();
+                this.socketClient?.LogoutAsync().GetAwaiter().GetResult();
+                this.socketClient?.Dispose();
+            }
         }
     }
 }

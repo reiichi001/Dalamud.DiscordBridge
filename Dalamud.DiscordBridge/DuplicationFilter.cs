@@ -14,7 +14,7 @@ namespace Dalamud.DiscordBridge
     /// </summary>
     public class DuplicateFilter
     {
-        static IPluginLog Logger = Service.Logger;
+        static readonly IPluginLog Logger = Service.Logger;
 
         /// <summary>
         /// Constructs a <see cref="DuplicateFilter"/> to dedupe messages for the given socket client.
@@ -125,7 +125,7 @@ namespace Dalamud.DiscordBridge
         }
         
         /// <returns>The most recent of the two messages.</returns>
-        private async Task<SocketMessage> DeleteMostRecent(SocketMessage left, SocketMessage right)
+        private static async Task<SocketMessage> DeleteMostRecent(SocketMessage left, SocketMessage right)
         {
             bool leftIsNewer = left.Timestamp.Offset > right.Timestamp.Offset;
             
@@ -188,7 +188,7 @@ namespace Dalamud.DiscordBridge
 
         private readonly DiscordBridgePlugin plugin;
         
-        private HashSet<SocketMessage> recentMessages = new();
+        private HashSet<SocketMessage> recentMessages = [];
 
         #endregion
     }

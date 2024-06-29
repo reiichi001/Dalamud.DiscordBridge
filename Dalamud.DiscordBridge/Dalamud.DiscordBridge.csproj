@@ -1,16 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <Platforms>x64;AnyCPU</Platforms>
     <LangVersion>latest</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <NoWarn>IDE0003</NoWarn>
-	<NoWarn>CA1416</NoWarn>
-    <AssemblyVersion>1.4.4.0</AssemblyVersion>
+	<NoWarn>CA1416,CA1862,IDE0003,IDE0060</NoWarn>
+    <AssemblyVersion>1.5.0.0</AssemblyVersion>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
@@ -24,20 +23,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.12" />
-    <PackageReference Include="Discord.Net" Version="3.10.0" />
-    <PackageReference Include="Discord.Net.Core" Version="3.10.0" />
-    <PackageReference Include="Discord.Net.Rest" Version="3.10.0" />
-    <PackageReference Include="Discord.Net.Webhook" Version="3.10.0" />
-    <PackageReference Include="Discord.Net.WebSocket" Version="3.10.0" />
-    <!-- PackageReference Include="NetStone" Version="1.0.0" / -->
+    <PackageReference Include="DalamudPackager" Version="2.1.13" />
+    <PackageReference Include="Discord.Net" Version="3.15.2" />
+    <PackageReference Include="Discord.Net.Core" Version="3.15.2" />
+    <PackageReference Include="Discord.Net.Rest" Version="3.15.2" />
+    <PackageReference Include="Discord.Net.Webhook" Version="3.15.2" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="3.15.2" />
+     <PackageReference Include="NetStone" Version="1.1.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\NetStone\NetStone\NetStone.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
+	<ItemGroup>
 	  <Reference Include="Dalamud">
 		  <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
 		  <Private>false</Private>

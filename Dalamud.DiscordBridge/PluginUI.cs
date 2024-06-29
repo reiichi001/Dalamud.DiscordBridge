@@ -5,23 +5,17 @@ using ImGuiNET;
 
 namespace Dalamud.DiscordBridge
 {
-    public class PluginUI
+    public class PluginUI(DiscordBridgePlugin plugin)
     {
-        static IPluginLog Logger = Service.Logger;
-        private readonly DiscordBridgePlugin Plugin;
-
-        public PluginUI(DiscordBridgePlugin plugin)
-        {
-            this.Plugin = plugin;
-        }
-
+        static readonly IPluginLog Logger = Service.Logger;
+        private readonly DiscordBridgePlugin Plugin = plugin;
         private bool isVisible;
 
         private string token;
         private string username;
 
-        private static Vector4 errorColor = new Vector4(1f, 0f, 0f, 1f);
-        private static Vector4 fineColor = new Vector4(0.337f, 1f, 0.019f, 1f);
+        private static Vector4 errorColor = new(1f, 0f, 0f, 1f);
+        private static Vector4 fineColor = new(0.337f, 1f, 0.019f, 1f);
 
         public void Show()
         {
