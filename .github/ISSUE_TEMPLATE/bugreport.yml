@@ -1,0 +1,53 @@
+name: Bug Report
+description: File a bug report for the Discord Chat Bridge plugin.
+labels: ["bug"]
+assignees:
+  - octocat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please read all prompts on this page carefully and make sure that you have entered the relevant details **before** submitting.
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Update disclaimer
+      description: If the game recently updated, XIVLauncher and plugins will not work. They need to be updated first. You can get notified about updates on the [XIVLauncher & Dalamud Discord](https://discord.com/invite/holdshift).
+      options:
+        - label: Yes, I have checked and my issue is not related to the game updating and plugins not working correctly.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What did you do?
+      description: What were you doing when the problem occurred? Please give us *step by step* directions. You can drop files and images here to attach them.
+      placeholder: Tell us what you did!
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Where were you running XIVLauncher?
+      options:
+        - Windows
+        - Linux (xlcore flatpak)
+        - Linux (xlcore community build)
+        - Linux (other)
+        - macOS
+    validations:
+      required: true
+  - type: input
+    id: runnerver
+    attributes:
+      label: Wine runner version
+      description: If you are using Linux, what version of Wine are you using? Leave this empty if you are on Windows.
+      placeholder: e.g. wine-xiv
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output or error message. You can get the current log from a running game using `/xllog` and filter for `Dalamud.DiscordBridge` or in relevant log files.
+      render: shell

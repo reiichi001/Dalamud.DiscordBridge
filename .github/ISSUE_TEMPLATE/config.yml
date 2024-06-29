@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: XIVLauncher FAQ
+    url: https://goatcorp.github.io/faq/
+    about: Help and more information about XIVLauncher and Dalamud for potential issues you might be encountering. Please check this first if it's not directly related to this plugin.
+  - name: XIVLauncher Discord
+    url: https://discord.com/invite/holdshift
+    about: Discussion about XIVLauncher and its development - they will do their best to answer your question if you can't find an answer in the FAQ!

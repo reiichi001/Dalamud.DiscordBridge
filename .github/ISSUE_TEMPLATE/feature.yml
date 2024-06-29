@@ -1,0 +1,37 @@
+name: Feature Request
+description: If you want to request a feature for the Discord Chat Bridge plugin, please do so here.
+labels: ["enhancement"]
+assignees:
+  - octocat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this feature request! Please read all prompts on this page carefully and make sure that you have entered the relevant details **before** submitting.
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Update disclaimer
+      description: If the game recently updated, XIVLauncher and plugins will not work. They need to be updated first. You can get notified about updates on he [XIVLauncher & Dalamud Discord](https://discord.com/invite/holdshift).
+      options:
+        - label: Yes, I have checked and my request is not related to the game updating and plugins not working correctly.
+          required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Where are you running XIVLauncher?
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, what did not, what did you want to happen?
+      description: Please tell us exactly what your request relates to.
+      placeholder: Tell us what you did!
+    validations:
+      required: true
