@@ -1145,7 +1145,7 @@ namespace Dalamud.DiscordBridge
                         if (string.IsNullOrEmpty(senderName))
                         {
                             Logger.Debug($"Sender Name was null or empty");
-                            senderName = $"FFXIV Bridge Worker {Service.State.LocalPlayer?.Name}";
+                            senderName = $"FFXIV Bridge Worker {plugin.cachedLocalPlayer?.Name ?? "Unknown LocalPlayer"}";
                             senderWorld = "";
                             doSearch = false;
                         }
@@ -1332,7 +1332,7 @@ namespace Dalamud.DiscordBridge
                 .WithFooter(footer =>
                 {
                     footer
-                        .WithText("For: " + Service.State.LocalPlayer?.Name)
+                        .WithText("For: " + plugin.cachedLocalPlayer?.Name ?? "Unknown LocalPlayer")
                         .WithIconUrl(Constant.LogoLink);
                 });
 

@@ -11,5 +11,6 @@ namespace Dalamud.DiscordBridge
         [PluginService] internal static IChatGui Chat { get; private set; } = null!;
         [PluginService] internal static IDataManager Data { get; private set; } = null!;
         [PluginService] internal static IPluginLog Logger { get; private set; } = null!;
+        [PluginService] internal static IFramework Framework { get; private set; } = null!;
     }
 }

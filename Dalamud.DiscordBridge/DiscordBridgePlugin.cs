@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Dalamud.DiscordBridge.API;
 using Dalamud.DiscordBridge.Attributes;
 using Dalamud.DiscordBridge.Model;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -23,6 +24,10 @@ namespace Dalamud.DiscordBridge
         public DiscordBridgeProvider DiscordBridgeProvider;
 
         static readonly IPluginLog Logger = Service.Logger;
+
+        public IPlayerCharacter cachedLocalPlayer;
+        private bool startedFromConstructor = false;
+
 
         public DiscordBridgePlugin(DalamudPluginInterface pluginInterface, ICommandManager command)
         {
@@ -63,17 +68,25 @@ namespace Dalamud.DiscordBridge
             this.Discord = new DiscordHandler(this);
             // Task t = this.Discord.Start(); // bot won't start if we just have this
             
+            
             Task.Run(async () => // makes the bot actually start
             {
                 await this.Discord.Start();
+                startedFromConstructor = true;
             });
             
+
+
 
             this.ui = new PluginUI(this);
             pluginInterface.UiBuilder.Draw += this.ui.Draw;
 
             Service.Chat.ChatMessage += ChatOnOnChatMessage;
             Service.State.CfPop += ClientStateOnCfPop;
+            Service.State.Login += OnLoginEvent;
+            Service.State.Logout += OnLogoutEvent;
+
+            
 
             this.commandManager = new PluginCommandManager<DiscordBridgePlugin>(this, command);
 
@@ -82,6 +95,23 @@ namespace Dalamud.DiscordBridge
                 Service.Chat.PrintError("The Discord Bridge plugin was installed successfully." +
                                                               "Please use the \"/pdiscord\" command to set it up.");
             }
+        }
+
+        private async void OnLoginEvent()
+        {
+            cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.State.LocalPlayer);
+            if (!startedFromConstructor)
+            {
+                await this.Discord.Start();
+            }
+        }
+
+        private void OnLogoutEvent()
+        {
+            cachedLocalPlayer = null;
+            this.Discord.Dispose();
+            this.Discord = new DiscordHandler(this);
+            startedFromConstructor = false;
         }
 
         private void ClientStateOnCfPop(ContentFinderCondition e)
@@ -202,6 +232,10 @@ namespace Dalamud.DiscordBridge
             Service.Interface.UiBuilder.Draw -= this.ui.Draw;
 
             Service.State.CfPop -= this.ClientStateOnCfPop;
+            
+            Service.State.Login -= OnLoginEvent;
+            
+            Service.State.Logout -= OnLogoutEvent;
         }
 
         public void Dispose()
