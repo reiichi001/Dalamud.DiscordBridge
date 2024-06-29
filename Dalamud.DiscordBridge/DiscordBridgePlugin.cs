@@ -29,7 +29,7 @@ namespace Dalamud.DiscordBridge
         private bool startedFromConstructor = false;
 
 
-        public DiscordBridgePlugin(DalamudPluginInterface pluginInterface, ICommandManager command)
+        public DiscordBridgePlugin(IDalamudPluginInterface pluginInterface, ICommandManager command)
         {
             Plugin = this;
             pluginInterface.Create<Service>();

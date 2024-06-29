@@ -15,7 +15,7 @@ namespace Dalamud.DiscordBridge.API
         private readonly ICallGateProvider<int> providerAPIVersion;
         private readonly ICallGateProvider<string, string, string, object> providerSendMessage;
 
-        public DiscordBridgeProvider(DalamudPluginInterface pluginInterface, IDiscordBridgeAPI api)
+        public DiscordBridgeProvider(IDalamudPluginInterface pluginInterface, IDiscordBridgeAPI api)
         {
             try
             {
