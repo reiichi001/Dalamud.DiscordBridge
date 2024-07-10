@@ -6,5 +6,5 @@
   "RepoUrl": "https://github.com/reiichi001/Dalamud.DiscordBridge",
   "Tags": [ "discord", "chat" ],
   "Punchline": "Receive your chat messages via Discord.",
-  "Changelog": "Updated for 7.0 / API 10"
+  "Changelog": "Removed bot stop/start on logout/login events. It seems this was causing some issues.\n\nThe plugin will also now cache LocalPlayer on every Framework ticket instead of only on Login events. That should help with LocalPlayer resolutions showing up as null when they shouldn't be."
 }

@@ -85,7 +85,7 @@ namespace Dalamud.DiscordBridge
             Service.State.CfPop += ClientStateOnCfPop;
             Service.State.Login += OnLoginEvent;
             Service.State.Logout += OnLogoutEvent;
-
+            Service.Framework.Update += OnFrameworkUpdate;
             
 
             this.commandManager = new PluginCommandManager<DiscordBridgePlugin>(this, command);
@@ -97,21 +97,34 @@ namespace Dalamud.DiscordBridge
             }
         }
 
+        private async void OnFrameworkUpdate(IFramework framework)
+        {
+            // I don't like this, but I saw users state that localplayer was coming back null when it shouldn't.
+            // So I'll just update the cache every tick even though that feels excessive.
+            cachedLocalPlayer = await framework.RunOnFrameworkThread(() => Service.State.LocalPlayer);
+        }
+
         private async void OnLoginEvent()
         {
+            // Since I'm pulling this on Framework updates now, this might not be needed anymore.
+            // But I'll keep it for now just in case.
             cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.State.LocalPlayer);
+
+            /* 
+            // I'll disable the bot start/stop on login/logout logic. Seems busted.
             if (!startedFromConstructor)
             {
                 await this.Discord.Start();
             }
+            */
         }
 
         private void OnLogoutEvent()
         {
             cachedLocalPlayer = null;
-            this.Discord.Dispose();
-            this.Discord = new DiscordHandler(this);
-            startedFromConstructor = false;
+            // this.Discord.Dispose();
+            // this.Discord = new DiscordHandler(this);
+            //startedFromConstructor = false;
         }
 
         private void ClientStateOnCfPop(ContentFinderCondition e)
