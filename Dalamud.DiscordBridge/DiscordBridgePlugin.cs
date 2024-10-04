@@ -72,6 +72,7 @@ namespace Dalamud.DiscordBridge
             Task.Run(async () => // makes the bot actually start
             {
                 await this.Discord.Start();
+                await this.Discord.SetIdlePresence();
                 startedFromConstructor = true;
             });
             
@@ -109,6 +110,7 @@ namespace Dalamud.DiscordBridge
             // Since I'm pulling this on Framework updates now, this might not be needed anymore.
             // But I'll keep it for now just in case.
             cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.State.LocalPlayer);
+            await this.Discord.SetOnlinePresence();
 
             /* 
             // I'll disable the bot start/stop on login/logout logic. Seems busted.
@@ -119,9 +121,10 @@ namespace Dalamud.DiscordBridge
             */
         }
 
-        private void OnLogoutEvent()
+        private async void OnLogoutEvent()
         {
             cachedLocalPlayer = null;
+            await this.Discord.SetIdlePresence();
             // this.Discord.Dispose();
             // this.Discord = new DiscordHandler(this);
             //startedFromConstructor = false;

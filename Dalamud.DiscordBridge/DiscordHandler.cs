@@ -149,6 +149,32 @@ namespace Dalamud.DiscordBridge
             return Task.CompletedTask;
         }
 
+        public async Task SetOnlinePresence()
+        {
+            try
+            {
+                await this.socketClient.SetStatusAsync(UserStatus.Online);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, "Failed to set online status.");
+            }
+            
+        }
+
+        public async Task SetIdlePresence()
+        {
+            try
+            {
+                await this.socketClient.SetStatusAsync(UserStatus.Idle);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, "Failed to set idle status.");
+            }
+
+        }
+
         private async Task SocketClientOnMessageReceived(SocketMessage message)
         {
             if (message.Author.IsBot || message.Author.IsWebhook)
