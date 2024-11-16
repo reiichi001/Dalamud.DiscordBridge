@@ -7,6 +7,8 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
+using Lumina.Excel.Sheets;
 
 namespace Dalamud.DiscordBridge
 {
@@ -62,6 +64,8 @@ namespace Dalamud.DiscordBridge
 
 
                                     var avatarUrl = Constant.LogoLink;
+                                    var itemSheet = Service.Data.GetExcelSheet<Item>();
+                                    Item itemRow;
 
                                     if (retainerSaleEvent.Message.Payloads.First(x => x.Type == PayloadType.Item) is not ItemPayload itemLink)
                                     {
@@ -70,13 +74,16 @@ namespace Dalamud.DiscordBridge
                                     }
                                     else
                                     {
-
+                                        itemRow = itemSheet.GetRow(itemLink.Item.RowId);
+                                        
+                                        
                                         // XIVAPI wants these padded with 0s in the front if under 6 digits
                                         // at least if Titanium Ore testing is to be believed. 
-                                        var iconFolder = $"{itemLink.Item.Icon / 1000 * 1000}".PadLeft(6,'0');
-                                        var iconFile = $"{itemLink.Item.Icon}".PadLeft(6, '0');
+                                        var iconFolder = $"{itemRow.Icon / 1000 * 1000}".PadLeft(6,'0');
+                                        var iconFile = $"{itemRow.Icon}".PadLeft(6, '0');
 
-                                        avatarUrl = $"https://xivapi.com" + $"/i/{iconFolder}/{iconFile}.png";
+                                        // avatarUrl = $"https://xivapi.com" + $"/i/{iconFolder}/{iconFile}.png";
+                                        avatarUrl = $"https://beta.xivapi.com/api/1/asset?path=ui%2Ficon%2F" + $"{iconFolder}%2F{iconFile}_hr1.tex&format=png";
                                         /* 
                                         // we don't need this anymore because the above should work
                                         // but it doesn't hurt to have it commented out as a fallback for the future
@@ -99,7 +106,7 @@ namespace Dalamud.DiscordBridge
 
                                     //SendItemSaleEvent(uint itemId, int amount, bool isHq, string message, XivChatType chatType)
 
-                                    await this.Plugin.Discord.SendItemSaleEvent(itemLink.Item.Name, avatarUrl, itemLink.Item.RowId, retainerSaleEvent.Message.TextValue, retainerSaleEvent.ChatType);
+                                    await this.Plugin.Discord.SendItemSaleEvent(itemRow.Name, avatarUrl, itemLink.Item.RowId, retainerSaleEvent.Message.TextValue, retainerSaleEvent.ChatType);
                                 }
                             }
                             catch (Exception e)
@@ -155,7 +162,7 @@ namespace Dalamud.DiscordBridge
                                                 case XivChatType.StandardEmote:
                                                     playerLink = chatEvent.Message.Payloads.FirstOrDefault(x => x.Type == PayloadType.Player) as PlayerPayload;
                                                     senderName = playerLink.PlayerName;
-                                                    senderWorld = playerLink.World.Name;
+                                                    senderWorld = playerLink.World.Value.Name.ExtractText();
                                                     // we need to get the world here because cross-world people will be assumed local player's otherwise.
                                                     /*
                                                     senderWorld = chatEvent.Message.TextValue.TrimStart(senderName.ToCharArray()).Split(' ')[0];
@@ -195,7 +202,7 @@ namespace Dalamud.DiscordBridge
 
                                         // only if we still need one
                                         if (senderWorld.Equals(string.Empty))
-                                            senderWorld = Plugin.cachedLocalPlayer.HomeWorld.GameData.Name;
+                                            senderWorld = Plugin.cachedLocalPlayer.HomeWorld.Value.Name.ExtractText();
 
 
 
@@ -207,8 +214,8 @@ namespace Dalamud.DiscordBridge
                                             ? Plugin.cachedLocalPlayer.Name
                                             : playerLink.PlayerName;
                                         senderWorld = chatEvent.ChatType == XivChatType.TellOutgoing
-                                            ? Plugin.cachedLocalPlayer.HomeWorld.GameData.Name
-                                            : playerLink.World.Name;
+                                            ? Plugin.cachedLocalPlayer.HomeWorld.Value.Name.ExtractText()
+                                            : playerLink.World.Value.Name.ExtractText();
                                         // Logger.Information($"FRANZDEBUGGING Playerlink was not null: {senderName}＠{senderWorld}");
                                     }
                                 }

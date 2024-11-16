@@ -9,7 +9,9 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel;
+using Lumina.Excel.Sheets;
+using Lumina.Text.ReadOnly;
 
 namespace Dalamud.DiscordBridge
 {
@@ -121,8 +123,15 @@ namespace Dalamud.DiscordBridge
             */
         }
 
-        private async void OnLogoutEvent()
+        private async void OnLogoutEvent(int type, int code)
         {
+            // Parameters:
+            //   type:
+            //     The type of logout.
+            //
+            //   code:
+            //     The success/failure code
+
             cachedLocalPlayer = null;
             await this.Discord.SetIdlePresence();
             // this.Discord.Dispose();
@@ -198,7 +207,7 @@ namespace Dalamud.DiscordBridge
         {
             // make a sample sale message. This is using Titanium Ore for an item
             Item sampleitem = Service.Data.GetExcelSheet<Item>().GetRow(12537);
-            SeString sameplesale = new(new Payload[] { new TextPayload("The "), new ItemPayload(sampleitem.RowId, true), new TextPayload(sampleitem.Name), new TextPayload(" you put up for sale in the Crystarium markets has sold for 777 gil (after fees).") });
+            SeString sameplesale = new(new Payload[] { new TextPayload("The "), new ItemPayload(sampleitem.RowId, true), new TextPayload(sampleitem.Name.ExtractText()), new TextPayload(" you put up for sale in the Crystarium markets has sold for 777 gil (after fees).") });
 
             // Logger.Information($"Trying to make a fake sale: {sameplesale.TextValue}");
 

@@ -8,7 +8,7 @@ using Dalamud.Plugin.Services;
 using Discord;
 using Discord.Webhook;
 using Discord.WebSocket;
-using Lumina.Text;
+using Lumina.Text.ReadOnly;
 using NetStone;
 using NetStone.Model.Parseables.Character;
 using NetStone.Search.Character;
@@ -1058,7 +1058,7 @@ namespace Dalamud.DiscordBridge
             return false;
         }
 
-        public async Task SendItemSaleEvent(SeString name, string iconurl, uint itemId, string message, XivChatType chatType)
+        public async Task SendItemSaleEvent(ReadOnlySeString name, string iconurl, uint itemId, string message, XivChatType chatType)
         {
             var applicableChannels =
                 this.plugin.Config.ChannelConfigs.Where(x => x.Value.ChatTypes.Contains(chatType));
@@ -1353,7 +1353,7 @@ namespace Dalamud.DiscordBridge
             var embedBuilder = new EmbedBuilder()
                 .WithCurrentTimestamp()
                 .WithColor(0x297c00)
-                .WithTitle("Duty is ready: " + cfEvent.ContentFinderCondition.Name)
+                .WithTitle("Duty is ready: " + cfEvent.ContentFinderCondition.Name.ExtractText())
                 .WithImageUrl("https://xivapi.com" + $"/i/{iconFolder}/{cfEvent.ContentFinderCondition.Image}.png")
                 .WithFooter(footer =>
                 {
