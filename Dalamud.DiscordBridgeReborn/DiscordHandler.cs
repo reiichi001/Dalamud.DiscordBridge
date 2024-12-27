@@ -205,7 +205,7 @@ namespace Dalamud.DiscordBridge
 
                         // Forward to ChatHandler
                         this.chatHandler.HandleMessage(chatChannel, chatMessage);
-                        await message.Channel.SendMessageAsync($"Message forwarded to ChatHandler: {chatMessage}");
+                        await message.DeleteAsync();
                         return;
                     }
                 }
