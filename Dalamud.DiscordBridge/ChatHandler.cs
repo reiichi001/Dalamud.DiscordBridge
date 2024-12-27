@@ -21,7 +21,8 @@ public class ChatHandler
       try
       {
          string formattedMessage = $"{channel} {message}";
-         messageRelay.SendMessage(formattedMessage);
+         Service.Framework.RunOnFrameworkThread(
+            () => messageRelay.SendMessage(formattedMessage));
       }
       catch (Exception ex)
       {

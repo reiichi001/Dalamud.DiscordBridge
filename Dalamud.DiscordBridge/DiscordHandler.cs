@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 using Dalamud.DiscordBridge.Model;
+using Dalamud.Game;
 using Dalamud.Game.Text;
 using Dalamud.Plugin.Services;
 using Discord;
@@ -104,7 +105,7 @@ namespace Dalamud.DiscordBridge
                 MessageCacheSize = 20, // hold onto the last 20 messages per channel in cache for duplicate checks
                 GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMessages | GatewayIntents.GuildWebhooks | GatewayIntents.MessageContent,
             });
-            this.chatHandler = new ChatHandler();
+            this.chatHandler = new ChatHandler(new SigScanner());
             Logger.Debug("AFTER DiscordSocketClient");
             this.socketClient.Ready += SocketClientOnReady;
             this.socketClient.MessageReceived += SocketClientOnMessageReceived;
