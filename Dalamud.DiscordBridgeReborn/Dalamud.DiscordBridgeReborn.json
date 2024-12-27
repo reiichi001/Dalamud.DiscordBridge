@@ -1,6 +1,6 @@
 {
-  "Author": "goat, modded by Franz",
-  "Name": "Discord Chat Bridge",
+  "Author": "goat, modded by Franz, Reborn by Raiden and Sayu",
+  "Name": "Discord Chat Bridge Reborn",
   "Description": "This plugin allows you to receive your chat messages via Discord.",
   "InternalName": "Dalamud.DiscordBridge",
   "RepoUrl": "https://github.com/reiichi001/Dalamud.DiscordBridge",
