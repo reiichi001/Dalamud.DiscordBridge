@@ -1,10 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/12.0.2">
+<Project Sdk="Dalamud.NET.Sdk/13.0.0">
 
   <PropertyGroup>
-    <Platforms>x64</Platforms>
 	<NoWarn>CA1416,CA1862,IDE0003,IDE0060</NoWarn>
-    <AssemblyVersion>1.5.2.0</AssemblyVersion>
+    <AssemblyVersion>1.5.3.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>

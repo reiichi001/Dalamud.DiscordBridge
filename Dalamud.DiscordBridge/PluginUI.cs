@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
 using Dalamud.Plugin.Services;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Dalamud.DiscordBridge
 {
@@ -40,7 +40,7 @@ namespace Dalamud.DiscordBridge
             ImGui.Dummy(new Vector2(10, 10));
 
             ImGui.InputText("Enter your bot token", ref this.token, 100);
-            ImGui.InputText("Enter your Username(e.g. user#0000)", ref this.username, 50);
+            ImGui.InputText("Enter your Username(e.g. mydiscorduser)", ref this.username, 50);
 
             ImGui.Dummy(new Vector2(10, 10));
 
