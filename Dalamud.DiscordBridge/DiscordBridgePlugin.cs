@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Dalamud.DiscordBridge.API;
 using Dalamud.DiscordBridge.Attributes;
@@ -68,8 +69,7 @@ namespace Dalamud.DiscordBridge
             
             this.DiscordBridgeProvider = new DiscordBridgeProvider(pluginInterface, new DiscordBridgeAPI(this));
             this.Discord = new DiscordHandler(this);
-            // Task t = this.Discord.Start(); // bot won't start if we just have this
-            
+            this.Discord.OnChatCommandReceived += OnDiscordChatCommand;
             
             Task.Run(async () => // makes the bot actually start
             {
@@ -99,6 +99,44 @@ namespace Dalamud.DiscordBridge
                                                               "Please use the \"/pdiscord\" command to set it up.");
             }
         }
+
+        private void OnDiscordChatCommand(string command, string username, string message)
+        {
+            // A whitelist of allowed commands to prevent abuse
+            var allowedCommands = new[] { "freecompany", "fc", "p", "sh", "say", "yell", "party", "alliance", "a", "cwl1", "cwl2", "cwl3", "cwl4", "cwl5", "cwl6", "cwl7", "cwl8", "l1"};
+            if (!allowedCommands.Contains(command, StringComparer.OrdinalIgnoreCase)) return;
+
+            // Use Framework.RunOnFrameworkThread to ensure thread safety with game functions
+            Service.Framework.RunOnFrameworkThread(() =>
+            {
+                // Sanitize the message to prevent any command injection issues
+                var sanitizedMessage = message.Replace("/", "//");
+                
+                // Format the message to show who sent it from Discord
+                var formattedMessage = $"[Discord-{username}] {sanitizedMessage}";
+                
+                // Ensure the message doesn't exceed chat limits
+                if (formattedMessage.Length > 450)
+                {
+                    formattedMessage = formattedMessage.Substring(0, 450) + "...";
+                }
+                
+                // Handle aliases, e.g. 'p' is an alias for 'party'
+                string gameCommand = command switch
+                {
+                    "p" => "party",
+                    "a" => "alliance",
+                    _ => command
+                };
+
+                var fullCommand = $"/{gameCommand} {formattedMessage}";
+                
+                Logger.Info($"Sending command to game from Discord: {fullCommand}");
+                Service.CommandManager.ProcessCommand(fullCommand);
+            });
+        }
+
+
 
         private async void OnFrameworkUpdate(IFramework framework)
         {
@@ -245,6 +283,8 @@ namespace Dalamud.DiscordBridge
             if (!disposing) return;
 
             this.DiscordBridgeProvider.Dispose();
+
+            this.Discord.OnChatCommandReceived -= OnDiscordChatCommand;
             
             this.Discord.Dispose();
 

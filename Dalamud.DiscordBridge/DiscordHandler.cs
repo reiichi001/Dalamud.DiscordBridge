@@ -36,6 +36,9 @@ namespace Dalamud.DiscordBridge
 
         private readonly DiscordBridgePlugin plugin;
 
+        // Event to notify the main plugin of a chat command from Discord
+        public event Action<string, string, string> OnChatCommandReceived;
+
         /// <summary>
         /// Chat types that are set when used the "all" setting.
         /// </summary>
@@ -983,6 +986,18 @@ namespace Dalamud.DiscordBridge
 
                     return;
                 }
+                var potentialCommand = args[0].Replace(this.plugin.Config.DiscordBotPrefix, "").ToLower();
+                var allowedCommands = new[] { "fc", "p", "sh", "say", "yell", "party", "alliance", "a", "cwls1", "cwls2", "cwls3", "cwls4", "cwls5", "cwls6", "cwls7", "cwls8" };
+                if (allowedCommands.Contains(potentialCommand))
+                {
+                    if (args.Length > 1)
+                    {
+                        var chatMessage = string.Join(" ", args.Skip(1));
+                        OnChatCommandReceived?.Invoke(potentialCommand, message.Author.Username, chatMessage);
+                    }
+                    return; // Command was handled
+                }
+
             }
             catch (Exception ex)
             {
