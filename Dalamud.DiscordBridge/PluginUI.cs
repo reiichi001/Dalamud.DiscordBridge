@@ -11,8 +11,8 @@ namespace Dalamud.DiscordBridge
         private readonly DiscordBridgePlugin Plugin = plugin;
         private bool isVisible;
 
-        private string token;
-        private string username;
+        private string token = string.Empty;
+        private string username = string.Empty;
 
         private static Vector4 errorColor = new(1f, 0f, 0f, 1f);
         private static Vector4 fineColor = new(0.337f, 1f, 0.019f, 1f);

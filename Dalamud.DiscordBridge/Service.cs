@@ -8,6 +8,8 @@ namespace Dalamud.DiscordBridge
     {
         [PluginService] internal static IDalamudPluginInterface Interface { get; private set; } = null!;
         [PluginService] internal static IClientState State { get; private set; } = null!;
+        [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
+        [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
         [PluginService] internal static IChatGui Chat { get; private set; } = null!;
         [PluginService] internal static IDataManager Data { get; private set; } = null!;
         [PluginService] internal static IPluginLog Logger { get; private set; } = null!;

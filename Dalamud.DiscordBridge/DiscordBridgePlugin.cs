@@ -27,7 +27,7 @@ namespace Dalamud.DiscordBridge
 
         static readonly IPluginLog Logger = Service.Logger;
 
-        public IPlayerCharacter cachedLocalPlayer;
+        public IPlayerCharacter? cachedLocalPlayer;
         private bool startedFromConstructor = false;
 
 
@@ -36,7 +36,7 @@ namespace Dalamud.DiscordBridge
             Plugin = this;
             pluginInterface.Create<Service>();
 
-            this.Config = (Configuration)pluginInterface.GetPluginConfig() ?? new Configuration();
+            this.Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Config.Initialize(pluginInterface);
 
             pluginInterface.UiBuilder.OpenConfigUi += this.OpenConfigUi;
@@ -104,14 +104,25 @@ namespace Dalamud.DiscordBridge
         {
             // I don't like this, but I saw users state that localplayer was coming back null when it shouldn't.
             // So I'll just update the cache every tick even though that feels excessive.
-            cachedLocalPlayer = await framework.RunOnFrameworkThread(() => Service.State.LocalPlayer);
+            // cachedLocalPlayer = await framework.RunOnFrameworkThread(() => Service.ObjectTable.LocalPlayer);
+            cachedLocalPlayer = Service.ObjectTable.LocalPlayer;
+            /*
+            await framework.RunOnFrameworkThread( () => {
+                if (Service.State.IsLoggedIn)
+                {
+                    cachedLocalPlayer = Service.ObjectTable.LocalPlayer;
+                }
+            });
+            */
+            
         }
 
         private async void OnLoginEvent()
         {
             // Since I'm pulling this on Framework updates now, this might not be needed anymore.
             // But I'll keep it for now just in case.
-            cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.State.LocalPlayer);
+            // cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.ObjectTable.LocalPlayer);
+            cachedLocalPlayer = Service.ObjectTable.LocalPlayer;
             await this.Discord.SetOnlinePresence();
 
             /* 
@@ -166,7 +177,8 @@ namespace Dalamud.DiscordBridge
                 {
                     ChatType = (XivChatType)((int)type & 0x7F), // strip off the sender mask subtype
                     Message = message,
-                    Sender = sender
+                    Sender = sender,
+                    AvatarUrl = ""
                 });
             }
             
@@ -196,7 +208,8 @@ namespace Dalamud.DiscordBridge
             {
                 ChatType = XivChatTypeExtensions.GetBySlug(commandArgs?[0] ?? "e"),
                 Message = new SeString(new Payload[]{new TextPayload("Test Message"), }),
-                Sender = new SeString(new Payload[]{new TextPayload("Test Sender"), })
+                Sender = new SeString(new Payload[]{new TextPayload("Test Sender"), }),
+                AvatarUrl = Plugin.Config.DefaultAvatarURL
             });
         }
         
@@ -215,7 +228,7 @@ namespace Dalamud.DiscordBridge
             {
                 ChatType = XivChatType.RetainerSale,
                 Message = sameplesale,
-                Sender = new SeString(new Payload[] { new TextPayload("Test Sender"), })
+                Sender = new SeString(new Payload[] { new TextPayload("Test Sender"), }),
             });
 
             Service.Chat.Print(new XivChatEntry

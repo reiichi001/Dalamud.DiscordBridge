@@ -1130,7 +1130,7 @@ namespace Dalamud.DiscordBridge
             }
             else
             {
-                senderWorld = null;
+                senderWorld = "";
             }
 
             // default avatar url to logo link if empty
@@ -1199,10 +1199,10 @@ namespace Dalamud.DiscordBridge
                             var playerCacheName = $"{senderName}＠{senderWorld}";
                             Logger.Debug($"Searching for {playerCacheName}");
                             
-                            if (CachedResponses.TryGetValue(playerCacheName, out LodestoneCharacter lschar))
+                            if (CachedResponses.TryGetValue(playerCacheName, out LodestoneCharacter? lschar))
                             {
                                 Logger.Debug($"Retrived cached data for {lschar.Name} {lschar.Avatar}");
-                                avatarUrl = lschar.Avatar.ToString();
+                                avatarUrl = lschar.Avatar?.ToString() ?? plugin.Config.DefaultAvatarURL;
                             }
                             else
                             {
@@ -1211,10 +1211,10 @@ namespace Dalamud.DiscordBridge
                                 var searchPage = await lodestoneClient.SearchCharacter(new CharacterSearchQuery
                                 {
                                     CharacterName = senderName,
-                                    World = senderWorld,
+                                    World = senderWorld ?? "",
                                 });
 
-                                var matchingEntry = searchPage.Results.FirstOrDefault(result => result.Name == senderName);
+                                var matchingEntry = searchPage?.Results.FirstOrDefault(result => result.Name == senderName);
                                 if (matchingEntry == null)
                                 {
                                     break;
@@ -1222,9 +1222,13 @@ namespace Dalamud.DiscordBridge
                                 
                                 lschar = await matchingEntry.GetCharacter();
 
-                                CachedResponses.TryAdd(playerCacheName, lschar);
-                                Logger.Debug($"Adding cached data for {lschar.Name} {lschar.Avatar}");
-                                avatarUrl = lschar.Avatar.ToString();
+                                if (lschar != null) {
+                                    CachedResponses.TryAdd(playerCacheName, lschar);
+                                    Logger.Debug($"Adding cached data for {lschar.Name} {lschar.Avatar}");
+                                    avatarUrl = lschar.Avatar?.ToString() ?? plugin.Config.DefaultAvatarURL;
+                                }
+
+                                
                             }
 
                             // avatarUrl = (await XivApiClient.GetCharacterSearch(senderName, senderWorld)).AvatarUrl;
@@ -1440,7 +1444,7 @@ namespace Dalamud.DiscordBridge
                     }
                     catch (Discord.Net.HttpException e)
                     {
-                        Logger.Error("Unable to get or create webhook", e.StackTrace);
+                        Logger.Error("Unable to get or create webhook", e.StackTrace ?? "No stack trace available");
                         return null;
                     }
                 }

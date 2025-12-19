@@ -13,9 +13,9 @@ namespace Dalamud.DiscordBridge
 
         private readonly object dictLock = new();
 
-        private string hqEmote;
-        private string atlEmote;
-        private string atrEmote;
+        private string hqEmote = string.Empty;
+        private string atlEmote = string.Empty;
+        private string atrEmote = string.Empty;
 
 
         public SpecialCharsHandler()

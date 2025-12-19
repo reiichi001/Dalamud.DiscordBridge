@@ -11,8 +11,8 @@ namespace Dalamud.DiscordBridge.Model
 {
     public class QueuedRetainerItemSaleEvent : QueuedXivEvent
     {
-        public SeString Message { get; set; }
-        public SeString Sender { get; set; }
-        public XivChatType ChatType { get; set; }
+        public required SeString Message { get; set; }
+        public required SeString Sender { get; set; }
+        public required XivChatType ChatType { get; set; }
     }
 }

@@ -118,7 +118,7 @@ namespace Dalamud.DiscordBridge
                         if (resultEvent is QueuedChatEvent chatEvent)
                         {
                             var senderName = (chatEvent.ChatType == XivChatType.TellOutgoing || chatEvent.ChatType == XivChatType.Echo)
-                                ? Plugin.cachedLocalPlayer.Name
+                                ? Plugin.cachedLocalPlayer?.Name
                                 : chatEvent.Sender.ToString();
                             var senderWorld = string.Empty;
 
@@ -160,9 +160,9 @@ namespace Dalamud.DiscordBridge
                                                     // senderWorld = this.plugin.Interface.ClientState.LocalPlayer.HomeWorld.GameData.Name;
                                                     break;
                                                 case XivChatType.StandardEmote:
-                                                    playerLink = chatEvent.Message.Payloads.FirstOrDefault(x => x.Type == PayloadType.Player) as PlayerPayload;
-                                                    senderName = playerLink.PlayerName;
-                                                    senderWorld = playerLink.World.Value.Name.ExtractText();
+                                                    playerLink = (PlayerPayload)chatEvent.Message.Payloads.First(x => x.Type == PayloadType.Player);
+                                                    senderName = playerLink!.PlayerName;
+                                                    senderWorld = playerLink!.World.Value.Name.ExtractText();
                                                     // we need to get the world here because cross-world people will be assumed local player's otherwise.
                                                     /*
                                                     senderWorld = chatEvent.Message.TextValue.TrimStart(senderName.ToCharArray()).Split(' ')[0];
@@ -254,7 +254,7 @@ namespace Dalamud.DiscordBridge
 
                             try
                             {
-                                await this.Plugin.Discord.SendChatEvent(messagetext, senderName.TextValue, senderWorld, chatEvent.ChatType, chatEvent.AvatarUrl);
+                                await this.Plugin.Discord.SendChatEvent(messagetext, senderName?.TextValue ?? "Invalid SenderName", senderWorld, chatEvent.ChatType, chatEvent.AvatarUrl);
                             }
                             catch (Exception e)
                             {
