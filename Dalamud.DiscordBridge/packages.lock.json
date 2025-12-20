@@ -29,7 +29,9 @@
         "contentHash": "iu/KzWHMmCiilAs1EZXc+fAMsMTwZht5BxmYcMMzyE3oNknHfc1n2e4wIQQXCYVrIOBnH3e70qEEfFcAOCMr7Q==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.3",
-          "System.Interactive.Async": "6.0.1"
+          "System.Collections.Immutable": "8.0.0",
+          "System.Interactive.Async": "6.0.1",
+          "System.ValueTuple": "4.5.0"
         }
       },
       "Discord.Net.Rest": {
@@ -78,6 +80,18 @@
           "Newtonsoft.Json": "13.0.3"
         }
       },
+      "System.Collections.Immutable": {
+        "type": "Direct",
+        "requested": "[10.0.1, )",
+        "resolved": "10.0.1",
+        "contentHash": "kdTe61B8P7i2M1pODC3MLbZ/CfFGjpC6c6jzxjQoB5DHZNewayCRqgFUmx3JKB6vLQtozpMQEiw+R5fO32Jv4g=="
+      },
+      "System.ValueTuple": {
+        "type": "Direct",
+        "requested": "[4.6.1, )",
+        "resolved": "4.6.1",
+        "contentHash": "+RJT4qaekpZ7DDLhf+LTjq+E48jieKiY9ulJ+BoxKmZblIJfIJT8Ufcaa/clQqnYvWs8jugfGSMu8ylS0caG0w=="
+      },
       "Discord.Net.Commands": {
         "type": "Transitive",
         "resolved": "3.18.0",
@@ -95,6 +109,7 @@
           "Discord.Net.Core": "3.18.0",
           "Discord.Net.Rest": "3.18.0",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
+          "System.Collections.Immutable": "8.0.0",
           "System.Reactive": "6.0.1"
         }
       },
