@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Dalamud.DiscordBridge.API;
 using Dalamud.DiscordBridge.Attributes;
 using Dalamud.DiscordBridge.Model;
+using Dalamud.Game.Chat;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
@@ -158,26 +159,26 @@ namespace Dalamud.DiscordBridge
             });
         }
 
-        private void ChatOnOnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool ishandled)
+        private void ChatOnOnChatMessage(IHandleableChatMessage message)
         {
-            if (ishandled) return; // don't process a message that's been handled.
+            if (message.IsHandled) return; // don't process a message that's been handled.
 
-            if (type == XivChatType.RetainerSale)
+            if (message.LogKind == XivChatType.RetainerSale)
             {
                 this.Discord.MessageQueue.Enqueue(new QueuedRetainerItemSaleEvent 
                 {
-                    ChatType = type,
-                    Message = message,
-                    Sender = sender
+                    ChatType = message.LogKind,
+                    Message = message.Message,
+                    Sender = message.Sender
                 });
             }
             else
             {
                 this.Discord.MessageQueue.Enqueue(new QueuedChatEvent
                 {
-                    ChatType = (XivChatType)((int)type & 0x7F), // strip off the sender mask subtype
-                    Message = message,
-                    Sender = sender,
+                    ChatType = message.LogKind,
+                    Message = message.Message,
+                    Sender = message.Sender,
                     AvatarUrl = ""
                 });
             }
