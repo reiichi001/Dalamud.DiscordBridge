@@ -2,7 +2,7 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
 	<NoWarn>CA1416,CA1862,IDE0003,IDE0060</NoWarn>
-    <AssemblyVersion>1.6.0.0</AssemblyVersion>
+    <AssemblyVersion>1.6.1.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,12 +10,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="3.19.1" />
-    <PackageReference Include="Discord.Net.Core" Version="3.19.1" />
-    <PackageReference Include="Discord.Net.Rest" Version="3.19.1" />
-    <PackageReference Include="Discord.Net.Webhook" Version="3.19.1" />
-    <PackageReference Include="Discord.Net.WebSocket" Version="3.19.1" />
-     <PackageReference Include="NetStone" Version="1.4.1" />
+    <PackageReference Include="Discord.Net" Version="3.20.1" />
+    <PackageReference Include="Discord.Net.Core" Version="3.20.1" />
+    <PackageReference Include="Discord.Net.Rest" Version="3.20.1" />
+    <PackageReference Include="Discord.Net.Webhook" Version="3.20.1" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="3.20.1" />
+    <PackageReference Include="NetStone" Version="1.4.1" />
   </ItemGroup>
 
   <ItemGroup>

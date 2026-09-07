@@ -34,12 +34,22 @@ namespace Dalamud.DiscordBridge
             this.runnerThread.Start();
         }
 
+        public void ClearQueue()
+        {
+            this.eventQueue.Clear();
+        }
+
         public void Stop()
         {
             this.runQueue = false;
 
             if(this.runnerThread.IsAlive)
                 this.runnerThread.Join();
+        }
+
+        public bool isStopped()
+        {
+            return this.runQueue;
         }
 
         public void Enqueue(QueuedXivEvent @event) => this.eventQueue.Enqueue(@event);

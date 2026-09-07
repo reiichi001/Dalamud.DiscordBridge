@@ -126,13 +126,11 @@ namespace Dalamud.DiscordBridge
             cachedLocalPlayer = Service.ObjectTable.LocalPlayer;
             await this.Discord.SetOnlinePresence();
 
-            /* 
-            // I'll disable the bot start/stop on login/logout logic. Seems busted.
-            if (!startedFromConstructor)
+            // Annoyance: Sorry to the users who might be affected if this goes badly. I wanted to make a specific person shut up.
+            if (this.Discord.MessageQueue.isStopped())
             {
-                await this.Discord.Start();
+                this.Discord.MessageQueue.Start();
             }
-            */
         }
 
         private async void OnLogoutEvent(int type, int code)
@@ -143,6 +141,13 @@ namespace Dalamud.DiscordBridge
             //
             //   code:
             //     The success/failure code
+
+            // Annoyance: Sorry to the users who might be affected if this goes badly. I wanted to make a specific person shut up.
+            if (!this.Discord.MessageQueue.isStopped())
+            {
+                this.Discord.MessageQueue.Stop();
+                this.Discord.MessageQueue.ClearQueue();
+            }
 
             cachedLocalPlayer = null;
             await this.Discord.SetIdlePresence();
