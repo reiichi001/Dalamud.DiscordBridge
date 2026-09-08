@@ -18,7 +18,7 @@ namespace Dalamud.DiscordBridge
         private volatile bool runQueue = true;
 
         private readonly DiscordBridgePlugin Plugin;
-        private readonly Thread runnerThread;
+        private Thread runnerThread;
 
         private readonly ConcurrentQueue<QueuedXivEvent> eventQueue = new();
 
@@ -30,6 +30,11 @@ namespace Dalamud.DiscordBridge
 
         public void Start()
         {
+            if (isStopped())
+            {
+                this.runnerThread = new Thread(RunMessageQueue);
+            }
+
             this.runQueue = true;
             this.runnerThread.Start();
         }
@@ -49,7 +54,7 @@ namespace Dalamud.DiscordBridge
 
         public bool isStopped()
         {
-            return this.runQueue;
+            return !this.runQueue;
         }
 
         public void Enqueue(QueuedXivEvent @event) => this.eventQueue.Enqueue(@event);
