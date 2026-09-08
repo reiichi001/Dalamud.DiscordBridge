@@ -92,6 +92,8 @@ namespace Dalamud.DiscordBridge
                 this.Plugin.Discord = new DiscordHandler(this.Plugin);
                 _ = this.Plugin.Discord.Start();
             }
+
+            ImGui.End();
         }
     }
 }
