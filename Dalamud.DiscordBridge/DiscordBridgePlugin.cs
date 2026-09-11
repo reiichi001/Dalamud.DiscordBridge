@@ -29,6 +29,8 @@ namespace Dalamud.DiscordBridge
         static readonly IPluginLog Logger = Service.Logger;
 
         // public IPlayerCharacter? cachedLocalPlayer;
+        public string cachedPlayerName;
+        public string cachedPlayerWorld;
         private bool startedFromConstructor = false;
 
 
@@ -89,6 +91,7 @@ namespace Dalamud.DiscordBridge
             Service.State.CfPop += ClientStateOnCfPop;
             Service.State.Login += OnLoginEvent;
             Service.State.Logout += OnLogoutEvent;
+            Service.State.TerritoryChanged += OnTerritoryChanged;
             Service.Framework.Update += OnFrameworkUpdate;
             
 
@@ -99,6 +102,12 @@ namespace Dalamud.DiscordBridge
                 Service.Chat.PrintError("The Discord Bridge plugin was installed successfully." +
                                                               "Please use the \"/pdiscord\" command to set it up.");
             }
+        }
+
+        private void OnTerritoryChanged(uint obj)
+        {
+            cachedPlayerName = Service.PlayerState.CharacterName;
+            cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.ToString() ?? "";
         }
 
         private async void OnFrameworkUpdate(IFramework framework)

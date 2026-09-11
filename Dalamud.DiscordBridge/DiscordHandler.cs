@@ -1171,7 +1171,7 @@ namespace Dalamud.DiscordBridge
                         if (string.IsNullOrEmpty(senderName))
                         {
                             Logger.Debug($"Sender Name was null or empty");
-                            senderName = $"FFXIV Bridge Worker {Service.PlayerState.CharacterName ?? "Unknown LocalPlayer"}";
+                            senderName = $"FFXIV Bridge Worker {plugin.cachedPlayerName ?? "Unknown LocalPlayer"}";
                             senderWorld = "";
                             doSearch = false;
                         }
@@ -1353,7 +1353,7 @@ namespace Dalamud.DiscordBridge
                 return;
 
             var iconFolder = cfEvent.ContentFinderCondition.Image / 1000 * 1000;
-
+            
             var embedBuilder = new EmbedBuilder()
                 .WithCurrentTimestamp()
                 .WithColor(0x297c00)
@@ -1362,7 +1362,7 @@ namespace Dalamud.DiscordBridge
                 .WithFooter(footer =>
                 {
                     footer
-                        .WithText("For: " + Service.PlayerState.CharacterName ?? "Unknown LocalPlayer")
+                        .WithText("For: " + plugin.cachedPlayerName ?? "Unknown LocalPlayer")
                         .WithIconUrl(Constant.LogoLink);
                 });
 
