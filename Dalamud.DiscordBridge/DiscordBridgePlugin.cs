@@ -28,7 +28,7 @@ namespace Dalamud.DiscordBridge
 
         static readonly IPluginLog Logger = Service.Logger;
 
-        public IPlayerCharacter? cachedLocalPlayer;
+        // public IPlayerCharacter? cachedLocalPlayer;
         private bool startedFromConstructor = false;
 
 
@@ -106,8 +106,13 @@ namespace Dalamud.DiscordBridge
             // I don't like this, but I saw users state that localplayer was coming back null when it shouldn't.
             // So I'll just update the cache every tick even though that feels excessive.
             // cachedLocalPlayer = await framework.RunOnFrameworkThread(() => Service.ObjectTable.LocalPlayer);
-            cachedLocalPlayer = Service.ObjectTable.LocalPlayer;
-            /*
+            
+            
+            // commenting out since we're switching to playerstate where possible
+            // cachedLocalPlayer = Service.ObjectTable?.LocalPlayer;
+            
+            
+            /* old method
             await framework.RunOnFrameworkThread( () => {
                 if (Service.State.IsLoggedIn)
                 {
@@ -120,10 +125,14 @@ namespace Dalamud.DiscordBridge
 
         private async void OnLoginEvent()
         {
+            Logger.Debug("Login Event Received");
+
             // Since I'm pulling this on Framework updates now, this might not be needed anymore.
             // But I'll keep it for now just in case.
             // cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.ObjectTable.LocalPlayer);
-            cachedLocalPlayer = Service.ObjectTable.LocalPlayer;
+            
+            //cachedLocalPlayer = Service.ObjectTable?.LocalPlayer;
+            
             await this.Discord.SetOnlinePresence();
 
             // Annoyance: Sorry to the users who might be affected if this goes badly. I wanted to make a specific person shut up.
@@ -142,14 +151,17 @@ namespace Dalamud.DiscordBridge
             //   code:
             //     The success/failure code
 
+            Logger.Debug("Logout Event Received");
+
             // Annoyance: Sorry to the users who might be affected if this goes badly. I wanted to make a specific person shut up.
             if (!this.Discord.MessageQueue.isStopped())
             {
                 this.Discord.MessageQueue.Stop();
                 this.Discord.MessageQueue.ClearQueue();
             }
+            
 
-            cachedLocalPlayer = null;
+            // cachedLocalPlayer = null;
             await this.Discord.SetIdlePresence();
             // this.Discord.Dispose();
             // this.Discord = new DiscordHandler(this);
