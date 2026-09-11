@@ -139,9 +139,11 @@ namespace Dalamud.DiscordBridge
             // Since I'm pulling this on Framework updates now, this might not be needed anymore.
             // But I'll keep it for now just in case.
             // cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.ObjectTable.LocalPlayer);
-            
+
             //cachedLocalPlayer = Service.ObjectTable?.LocalPlayer;
-            
+            cachedPlayerName = Service.PlayerState.CharacterName;
+            cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.ToString() ?? "";
+
             await this.Discord.SetOnlinePresence();
 
             // Annoyance: Sorry to the users who might be affected if this goes badly. I wanted to make a specific person shut up.
@@ -168,9 +170,11 @@ namespace Dalamud.DiscordBridge
                 this.Discord.MessageQueue.Stop();
                 this.Discord.MessageQueue.ClearQueue();
             }
-            
+
 
             // cachedLocalPlayer = null;
+
+
             await this.Discord.SetIdlePresence();
             // this.Discord.Dispose();
             // this.Discord = new DiscordHandler(this);
