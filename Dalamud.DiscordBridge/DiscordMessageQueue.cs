@@ -269,7 +269,7 @@ namespace Dalamud.DiscordBridge
 
                             try
                             {
-                                await this.Plugin.Discord.SendChatEvent(messagetext, senderName?.TextValue ?? "Invalid SenderName", senderWorld, chatEvent.ChatType, chatEvent.AvatarUrl);
+                                await this.Plugin.Discord.SendChatEvent(messagetext ?? "Missing text - how did you manage this?", senderName?.TextValue ?? "Invalid SenderName", senderWorld, chatEvent.ChatType, chatEvent.AvatarUrl);
                             }
                             catch (Exception e)
                             {
