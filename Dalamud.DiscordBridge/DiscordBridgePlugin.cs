@@ -104,9 +104,9 @@ namespace Dalamud.DiscordBridge
             }
         }
 
-        private void OnTerritoryChanged(uint obj)
+        private async void OnTerritoryChanged(uint obj)
         {
-            cachedPlayerName = Service.PlayerState.CharacterName;
+            cachedPlayerName = Service.PlayerState.CharacterName ?? "";
             cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.ToString() ?? "";
         }
 
@@ -134,14 +134,12 @@ namespace Dalamud.DiscordBridge
 
         private async void OnLoginEvent()
         {
-            Logger.Debug("Login Event Received");
-
             // Since I'm pulling this on Framework updates now, this might not be needed anymore.
             // But I'll keep it for now just in case.
             // cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.ObjectTable.LocalPlayer);
 
             //cachedLocalPlayer = Service.ObjectTable?.LocalPlayer;
-            cachedPlayerName = Service.PlayerState.CharacterName;
+            cachedPlayerName = Service.PlayerState.CharacterName ?? "";
             cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.ToString() ?? "";
 
             await this.Discord.SetOnlinePresence();
@@ -161,8 +159,6 @@ namespace Dalamud.DiscordBridge
             //
             //   code:
             //     The success/failure code
-
-            Logger.Debug("Logout Event Received");
 
             // Annoyance: Sorry to the users who might be affected if this goes badly. I wanted to make a specific person shut up.
             if (!this.Discord.MessageQueue.isStopped())
