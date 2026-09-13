@@ -107,7 +107,7 @@ namespace Dalamud.DiscordBridge
         private async void OnTerritoryChanged(uint obj)
         {
             cachedPlayerName = Service.PlayerState.CharacterName ?? "";
-            cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.ToString() ?? "";
+            cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.Name.ToString() ?? "";
         }
 
         private async void OnFrameworkUpdate(IFramework framework)
@@ -140,7 +140,7 @@ namespace Dalamud.DiscordBridge
 
             //cachedLocalPlayer = Service.ObjectTable?.LocalPlayer;
             cachedPlayerName = Service.PlayerState.CharacterName ?? "";
-            cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.ToString() ?? "";
+            cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.Name.ToString() ?? "";
 
             await this.Discord.SetOnlinePresence();
 
