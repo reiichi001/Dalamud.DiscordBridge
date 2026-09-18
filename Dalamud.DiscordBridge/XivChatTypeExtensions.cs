@@ -9,8 +9,8 @@ namespace Dalamud.DiscordBridge
     {
         public class XivChatTypeInfo
         {
-            public string Slug { get; set; }
-            public string FancyName { get; set; }
+            public string? Slug { get; set; }
+            public string? FancyName { get; set; }
         }
 
         public static XivChatType IpcChatType => (XivChatType)99; // using dummy code that isn't used by game
@@ -494,12 +494,12 @@ namespace Dalamud.DiscordBridge
 
         public static string GetSlug(this XivChatType type)
         {
-            return type.GetInfo().Slug;
+            return type.GetInfo().Slug ?? "";
         }
 
         public static string GetFancyName(this XivChatType type)
         {
-            return type.GetInfo().FancyName;
+            return type.GetInfo().FancyName ?? "";
         }
 
         public static XivChatType GetBySlug(string slug) => TypeInfoDict.First(x => x.Value.Slug == slug).Key;

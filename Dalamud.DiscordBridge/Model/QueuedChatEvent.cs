@@ -5,9 +5,9 @@ namespace Dalamud.DiscordBridge.Model
 {
     public class QueuedChatEvent : QueuedXivEvent
     {
-        public SeString Message { get; set; }
-        public SeString Sender { get; set; }
-        public XivChatType ChatType { get; set; }
-        public string AvatarUrl { get; set; }
+        public required SeString Message { get; set; }
+        public required SeString Sender { get; set; }
+        public required XivChatType ChatType { get; set; }
+        public required string AvatarUrl { get; set; }
     }
 }

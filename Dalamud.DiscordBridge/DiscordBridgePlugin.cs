@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Dalamud.DiscordBridge.API;
 using Dalamud.DiscordBridge.Attributes;
 using Dalamud.DiscordBridge.Model;
+using Dalamud.Game.Chat;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
@@ -27,7 +28,9 @@ namespace Dalamud.DiscordBridge
 
         static readonly IPluginLog Logger = Service.Logger;
 
-        public IPlayerCharacter cachedLocalPlayer;
+        // public IPlayerCharacter? cachedLocalPlayer;
+        public string cachedPlayerName;
+        public string cachedPlayerWorld;
         private bool startedFromConstructor = false;
 
 
@@ -36,7 +39,7 @@ namespace Dalamud.DiscordBridge
             Plugin = this;
             pluginInterface.Create<Service>();
 
-            this.Config = (Configuration)pluginInterface.GetPluginConfig() ?? new Configuration();
+            this.Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             this.Config.Initialize(pluginInterface);
 
             pluginInterface.UiBuilder.OpenConfigUi += this.OpenConfigUi;
@@ -88,6 +91,7 @@ namespace Dalamud.DiscordBridge
             Service.State.CfPop += ClientStateOnCfPop;
             Service.State.Login += OnLoginEvent;
             Service.State.Logout += OnLogoutEvent;
+            Service.State.TerritoryChanged += OnTerritoryChanged;
             Service.Framework.Update += OnFrameworkUpdate;
             
 
@@ -100,27 +104,51 @@ namespace Dalamud.DiscordBridge
             }
         }
 
+        private async void OnTerritoryChanged(uint obj)
+        {
+            cachedPlayerName = Service.PlayerState.CharacterName ?? "";
+            cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.Name.ToString() ?? "";
+        }
+
         private async void OnFrameworkUpdate(IFramework framework)
         {
             // I don't like this, but I saw users state that localplayer was coming back null when it shouldn't.
             // So I'll just update the cache every tick even though that feels excessive.
-            cachedLocalPlayer = await framework.RunOnFrameworkThread(() => Service.State.LocalPlayer);
+            // cachedLocalPlayer = await framework.RunOnFrameworkThread(() => Service.ObjectTable.LocalPlayer);
+            
+            
+            // commenting out since we're switching to playerstate where possible
+            // cachedLocalPlayer = Service.ObjectTable?.LocalPlayer;
+            
+            
+            /* old method
+            await framework.RunOnFrameworkThread( () => {
+                if (Service.State.IsLoggedIn)
+                {
+                    cachedLocalPlayer = Service.ObjectTable.LocalPlayer;
+                }
+            });
+            */
+            
         }
 
         private async void OnLoginEvent()
         {
             // Since I'm pulling this on Framework updates now, this might not be needed anymore.
             // But I'll keep it for now just in case.
-            cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.State.LocalPlayer);
+            // cachedLocalPlayer = await Service.Framework.RunOnFrameworkThread(() => Service.ObjectTable.LocalPlayer);
+
+            //cachedLocalPlayer = Service.ObjectTable?.LocalPlayer;
+            cachedPlayerName = Service.PlayerState.CharacterName ?? "";
+            cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.Name.ToString() ?? "";
+
             await this.Discord.SetOnlinePresence();
 
-            /* 
-            // I'll disable the bot start/stop on login/logout logic. Seems busted.
-            if (!startedFromConstructor)
+            // Annoyance: Sorry to the users who might be affected if this goes badly. I wanted to make a specific person shut up.
+            if (this.Discord.MessageQueue.isStopped())
             {
-                await this.Discord.Start();
+                this.Discord.MessageQueue.Start();
             }
-            */
         }
 
         private async void OnLogoutEvent(int type, int code)
@@ -132,7 +160,17 @@ namespace Dalamud.DiscordBridge
             //   code:
             //     The success/failure code
 
-            cachedLocalPlayer = null;
+            // Annoyance: Sorry to the users who might be affected if this goes badly. I wanted to make a specific person shut up.
+            if (!this.Discord.MessageQueue.isStopped())
+            {
+                this.Discord.MessageQueue.Stop();
+                this.Discord.MessageQueue.ClearQueue();
+            }
+
+
+            // cachedLocalPlayer = null;
+
+
             await this.Discord.SetIdlePresence();
             // this.Discord.Dispose();
             // this.Discord = new DiscordHandler(this);
@@ -147,26 +185,27 @@ namespace Dalamud.DiscordBridge
             });
         }
 
-        private void ChatOnOnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool ishandled)
+        private void ChatOnOnChatMessage(IHandleableChatMessage message)
         {
-            if (ishandled) return; // don't process a message that's been handled.
+            if (message.IsHandled) return; // don't process a message that's been handled.
 
-            if (type == XivChatType.RetainerSale)
+            if (message.LogKind == XivChatType.RetainerSale)
             {
                 this.Discord.MessageQueue.Enqueue(new QueuedRetainerItemSaleEvent 
                 {
-                    ChatType = type,
-                    Message = message,
-                    Sender = sender
+                    ChatType = message.LogKind,
+                    Message = message.Message,
+                    Sender = message.Sender
                 });
             }
             else
             {
                 this.Discord.MessageQueue.Enqueue(new QueuedChatEvent
                 {
-                    ChatType = (XivChatType)((int)type & 0x7F), // strip off the sender mask subtype
-                    Message = message,
-                    Sender = sender
+                    ChatType = message.LogKind,
+                    Message = message.Message,
+                    Sender = message.Sender,
+                    AvatarUrl = ""
                 });
             }
             
@@ -196,7 +235,8 @@ namespace Dalamud.DiscordBridge
             {
                 ChatType = XivChatTypeExtensions.GetBySlug(commandArgs?[0] ?? "e"),
                 Message = new SeString(new Payload[]{new TextPayload("Test Message"), }),
-                Sender = new SeString(new Payload[]{new TextPayload("Test Sender"), })
+                Sender = new SeString(new Payload[]{new TextPayload("Test Sender"), }),
+                AvatarUrl = Plugin.Config.DefaultAvatarURL
             });
         }
         
@@ -215,7 +255,7 @@ namespace Dalamud.DiscordBridge
             {
                 ChatType = XivChatType.RetainerSale,
                 Message = sameplesale,
-                Sender = new SeString(new Payload[] { new TextPayload("Test Sender"), })
+                Sender = new SeString(new Payload[] { new TextPayload("Test Sender"), }),
             });
 
             Service.Chat.Print(new XivChatEntry

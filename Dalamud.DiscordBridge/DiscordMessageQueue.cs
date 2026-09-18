@@ -18,7 +18,7 @@ namespace Dalamud.DiscordBridge
         private volatile bool runQueue = true;
 
         private readonly DiscordBridgePlugin Plugin;
-        private readonly Thread runnerThread;
+        private Thread runnerThread;
 
         private readonly ConcurrentQueue<QueuedXivEvent> eventQueue = new();
 
@@ -30,8 +30,18 @@ namespace Dalamud.DiscordBridge
 
         public void Start()
         {
+            if (isStopped())
+            {
+                this.runnerThread = new Thread(RunMessageQueue);
+            }
+
             this.runQueue = true;
             this.runnerThread.Start();
+        }
+
+        public void ClearQueue()
+        {
+            this.eventQueue.Clear();
         }
 
         public void Stop()
@@ -40,6 +50,11 @@ namespace Dalamud.DiscordBridge
 
             if(this.runnerThread.IsAlive)
                 this.runnerThread.Join();
+        }
+
+        public bool isStopped()
+        {
+            return !this.runQueue;
         }
 
         public void Enqueue(QueuedXivEvent @event) => this.eventQueue.Enqueue(@event);
@@ -118,7 +133,7 @@ namespace Dalamud.DiscordBridge
                         if (resultEvent is QueuedChatEvent chatEvent)
                         {
                             var senderName = (chatEvent.ChatType == XivChatType.TellOutgoing || chatEvent.ChatType == XivChatType.Echo)
-                                ? Plugin.cachedLocalPlayer.Name
+                                ? Plugin.cachedPlayerName
                                 : chatEvent.Sender.ToString();
                             var senderWorld = string.Empty;
 
@@ -131,7 +146,7 @@ namespace Dalamud.DiscordBridge
 
                             try
                             {
-                                if (Plugin.cachedLocalPlayer != null)
+                                if (Plugin.cachedPlayerName != null)
                                 {
                                     if (chatEvent.Sender.Payloads.FirstOrDefault(x => x.Type == PayloadType.Player) is not PlayerPayload playerLink)
                                     {
@@ -140,9 +155,9 @@ namespace Dalamud.DiscordBridge
 
                                         // Special case 2 - When the local player talks in party/alliance, the name comes through as raw text,
                                         // but prefixed by their position number in the party (which for local player may always be 1)
-                                        if (chatEvent.Sender.TextValue.EndsWith(Plugin.cachedLocalPlayer.Name.TextValue))
+                                        if (chatEvent.Sender.TextValue.EndsWith(Plugin.cachedPlayerName))
                                         {
-                                            senderName = Plugin.cachedLocalPlayer.Name;
+                                            senderName = Plugin.cachedPlayerName;
                                         }
                                         else
                                         {
@@ -156,13 +171,13 @@ namespace Dalamud.DiscordBridge
                                                 case XivChatType.Notice:
                                                     break;
                                                 case XivChatType.TellOutgoing:
-                                                    senderName = Plugin.cachedLocalPlayer.Name;
+                                                    senderName = Plugin.cachedPlayerName;
                                                     // senderWorld = this.plugin.Interface.ClientState.LocalPlayer.HomeWorld.GameData.Name;
                                                     break;
                                                 case XivChatType.StandardEmote:
-                                                    playerLink = chatEvent.Message.Payloads.FirstOrDefault(x => x.Type == PayloadType.Player) as PlayerPayload;
-                                                    senderName = playerLink.PlayerName;
-                                                    senderWorld = playerLink.World.Value.Name.ExtractText();
+                                                    playerLink = (PlayerPayload)chatEvent.Message.Payloads.First(x => x.Type == PayloadType.Player);
+                                                    senderName = playerLink!.PlayerName;
+                                                    senderWorld = playerLink!.World.Value.Name.ExtractText();
                                                     // we need to get the world here because cross-world people will be assumed local player's otherwise.
                                                     /*
                                                     senderWorld = chatEvent.Message.TextValue.TrimStart(senderName.ToCharArray()).Split(' ')[0];
@@ -171,7 +186,7 @@ namespace Dalamud.DiscordBridge
                                                     */
                                                     break;
                                                 case XivChatType.Echo:
-                                                    senderName = Plugin.cachedLocalPlayer.Name;
+                                                    senderName = Plugin.cachedPlayerName;
                                                     // senderWorld = this.plugin.Interface.ClientState.LocalPlayer.HomeWorld.GameData.Name;
                                                     break;
                                                 case (XivChatType)61: // NPC Talk
@@ -201,8 +216,8 @@ namespace Dalamud.DiscordBridge
                                         }
 
                                         // only if we still need one
-                                        if (senderWorld.Equals(string.Empty))
-                                            senderWorld = Plugin.cachedLocalPlayer.HomeWorld.Value.Name.ExtractText();
+                                        if (senderWorld.Equals(string.Empty)) 
+                                            senderWorld = Plugin.cachedPlayerWorld;
 
 
 
@@ -211,10 +226,10 @@ namespace Dalamud.DiscordBridge
                                     else
                                     {
                                         senderName = chatEvent.ChatType == XivChatType.TellOutgoing
-                                            ? Plugin.cachedLocalPlayer.Name
+                                            ? Plugin.cachedPlayerName
                                             : playerLink.PlayerName;
                                         senderWorld = chatEvent.ChatType == XivChatType.TellOutgoing
-                                            ? Plugin.cachedLocalPlayer.HomeWorld.Value.Name.ExtractText()
+                                            ? Plugin.cachedPlayerWorld
                                             : playerLink.World.Value.Name.ExtractText();
                                         // Logger.Information($"FRANZDEBUGGING Playerlink was not null: {senderName}＠{senderWorld}");
                                     }
@@ -254,7 +269,7 @@ namespace Dalamud.DiscordBridge
 
                             try
                             {
-                                await this.Plugin.Discord.SendChatEvent(messagetext, senderName.TextValue, senderWorld, chatEvent.ChatType, chatEvent.AvatarUrl);
+                                await this.Plugin.Discord.SendChatEvent(messagetext ?? "Missing text - how did you manage this?", senderName ?? "Invalid SenderName", senderWorld, chatEvent.ChatType, chatEvent.AvatarUrl);
                             }
                             catch (Exception e)
                             {
