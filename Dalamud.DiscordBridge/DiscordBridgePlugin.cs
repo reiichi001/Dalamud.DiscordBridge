@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Dalamud.DiscordBridge.API;
 using Dalamud.DiscordBridge.Attributes;
 using Dalamud.DiscordBridge.Model;
@@ -10,9 +8,12 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
+using System;
+using System.Threading.Tasks;
 
 namespace Dalamud.DiscordBridge
 {
@@ -72,15 +73,24 @@ namespace Dalamud.DiscordBridge
             this.DiscordBridgeProvider = new DiscordBridgeProvider(pluginInterface, new DiscordBridgeAPI(this));
             this.Discord = new DiscordHandler(this);
             // Task t = this.Discord.Start(); // bot won't start if we just have this
-            
-            
-            Task.Run(async () => // makes the bot actually start
+
+
+            System.Threading.Tasks.Task.Run(async () => // makes the bot actually start
             {
                 await this.Discord.Start();
                 await this.Discord.SetIdlePresence();
                 startedFromConstructor = true;
+
+                await Service.Framework.RunOnFrameworkThread(() => {
+                    if (Service.State.IsLoggedIn)
+                    {
+                        cachedPlayerName = Service.PlayerState.CharacterName ?? "";
+                        cachedPlayerWorld = Service.PlayerState.HomeWorld.Value.Name.ToString() ?? "";
+                    }
+                });
             });
             
+
 
 
 
